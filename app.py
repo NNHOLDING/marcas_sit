@@ -90,7 +90,7 @@ if not st.session_state.logueado:
         else:
             st.error("Credenciales incorrectas")
 
-# 🖼️ Logo institucional en pantalla principal
+# 🖼️ Logo institucional
 if st.session_state.logueado and not st.session_state.confirmar_salida:
     st.markdown(
         "<div style='text-align: center;'>"
@@ -204,10 +204,3 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
     st.markdown("---")
     if st.button("🚪 Salir"):
         st.session_state.confirmar_salida = True
-
-# 🌤️ Confirmación de salida y despedida
-if st.session_state.confirmar_salida:
-    st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✅ Sí
