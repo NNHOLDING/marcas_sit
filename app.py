@@ -64,10 +64,14 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
 
     datos = cargar_datos()
 
-    if 'usuario' not in datos.columns or 'fecha' not in datos.columns:
-        st.error("⚠️ La hoja de cálculo no tiene las columnas 'usuario' y 'fecha'.")
-        st.write("Columnas encontradas:", datos.columns.tolist())
-        st.stop()
+    # Validación flexible para hojas vacías o mal configuradas
+    if datos.empty:
+        st.warning("⚠️ La hoja 'Jornadas' está vacía. Puedes registrar tu jornada.")
+        datos = pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "hoa cierre"])
+    elif 'usuario' not in datos.columns or 'fecha' not in datos.columns:
+        st.warning("⚠️ La hoja tiene registros, pero no contiene las columnas 'usuario' y 'fecha'.")
+        st.write("Columnas detectadas:", datos.columns.tolist())
+        datos = pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "hoa cierre"])
 
     registro_existente = datos[
         (datos['usuario'] == st.session_state.usuario) &
@@ -122,10 +126,13 @@ if st.session_state.logueado and st.session_state.usuario == "Administradr":
 
     datos = cargar_datos()
 
-    if 'bodega' not in datos.columns or 'fecha' not in datos.columns:
-        st.error("⚠️ La hoja de cálculo no tiene las columnas necesarias para filtrar.")
-        st.write("Columnas encontradas:", datos.columns.tolist())
-        st.stop()
+    if datos.empty:
+        st.info("📂 La hoja está vacía. No hay registros que mostrar.")
+        datos = pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "hoa cierre"])
+    elif 'bodega' not in datos.columns or 'fecha' not in datos.columns:
+        st.warning("⚠️ Columnas requeridas no detectadas. Verifica que la hoja contenga 'bodega' y 'fecha'.")
+        st.write("Columnas disponibles:", datos.columns.tolist())
+        datos = pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "hoa cierre"])
 
     bodega_admin = st.selectbox("Filtrar por bodega", ["Todas"] + bodegas)
     col1, col2 = st.columns(2)
