@@ -5,10 +5,10 @@ import pytz
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# 🎛️ Configuración de la aplicación
+# 🎛️ Configuración de la aplicación con ícono personalizado
 st.set_page_config(
     page_title="Smart Intelligence Tools",
-    page_icon="https://raw.githubusercontent.com/NNHOLDING/alisto_app/main/NN25.ico",
+    page_icon="https://raw.githubusercontent.com/NNHOLDING/marcas_sit/main/NN25.ico",
     layout="centered"
 )
 
@@ -88,7 +88,7 @@ if not st.session_state.logueado:
         else:
             st.error("Credenciales incorrectas")
 
-# 🕒 Página de gestión de jornada (usuarios normales)
+# 🕒 Panel para usuarios normales
 if st.session_state.logueado and st.session_state.usuario != "Administrador":
     st.title("🕒 Gestión de Jornada")
 
@@ -146,18 +146,52 @@ if st.session_state.logueado and st.session_state.usuario != "Administrador":
 # 🛠️ Panel exclusivo para Administrador
 if st.session_state.logueado and st.session_state.usuario == "Administrador":
     st.title("📋 Panel Administrativo")
-    st.info("Bienvenido, Administrador. Aquí podrás ver y gestionar las jornadas registradas.")
+    st.info("Bienvenido, Administrador. Puedes filtrar, visualizar y descargar las jornadas registradas.")
+
     datos = cargar_datos()
-    st.dataframe(datos)
 
-    csv = datos.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        label="📥 Descargar datos en CSV",
-        data=csv,
-        file_name="jornadas_registradas.csv",
-        mime="text/csv"
-    )
+    bodegas = [
+        "Bodega Barrio Cuba", "CEDI Coyol", "Bodega Cañas",
+        "Bodega Coto", "Bodega San Carlos", "Bodega Pérez Zeledon"
+    ]
 
+    st.markdown("### 🔍 Filtros")
+    bodega_admin = st.selectbox("Filtrar por bodega", ["Todas"] + bodegas)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        fecha_inicio = st.date_input("Fecha inicio", value=datetime.now(cr_timezone).date())
+    with col2:
+        fecha_fin = st.date_input("Fecha fin", value=datetime.now(cr_timezone).date())
+
+    datos_filtrados = datos.copy()
+
+    if bodega_admin != "Todas":
+        datos_filtrados = datos_filtrados[datos_filtrados["bodega"] == bodega_admin]
+
+    datos_filtrados["fecha"] = pd.to_datetime(datos_filtrados["fecha"], errors="coerce")
+    datos_filtrados = datos_filtrados[
+        (datos_filtrados["fecha"].dt.date >= fecha_inicio) &
+        (datos_filtrados["fecha"].dt.date <= fecha_fin)
+    ]
+
+    st.markdown("### 📑 Resultados filtrados")
+    if not datos_filtrados.empty:
+        st.dataframe(datos_filtrados)
+
+        csv = datos_filtrados.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="📥 Descargar resultados en CSV",
+            data=csv,
+            file_name="jornadas_filtradas.csv",
+            mime="text/csv"
+        )
+
+        st.success(f"Se encontraron {len(datos_filtrados)} registros.")
+    else:
+        st.info("No hay registros que coincidan con los filtros seleccionados.")
+
+    st.markdown("---")
     if st.button("🚪 Salir"):
         st.session_state.clear()
         st.stop()
