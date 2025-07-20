@@ -68,8 +68,8 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
         st.stop()
 
     registro_existente = datos[
-        (datos['Usuario'] == st.session_state.usuario) &
-        (datos['Fecha'] == fecha_actual)
+        (datos['usuario'] == st.session_state.usuario) &
+        (datos['fecha'] == fecha_actual)
     ]
 
     col1, col2 = st.columns(2)
