@@ -35,14 +35,14 @@ def cargar_datos():
     sheet = conectar_hoja()
     registros = sheet.get_all_values()
     if len(registros) < 2:
-        return pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "fecha cierre"])
+        return pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "fecha cierre", "total horas extras"])
     encabezados = [col.lower().strip() for col in registros[0]]
     filas = registros[1:]
     return pd.DataFrame(filas, columns=encabezados)
 
 # 📌 Agregar fila al iniciar jornada
 def agregar_fila_inicio(fecha, usuario, bodega, hora_inicio):
-    conectar_hoja().append_row([fecha, usuario, bodega, hora_inicio, ""])
+    conectar_hoja().append_row([fecha, usuario, bodega, hora_inicio, "", ""])
 
 # ✅ Actualizar campo 'fecha cierre'
 def actualizar_fecha_cierre(fecha, usuario, bodega, fecha_cierre):
@@ -89,7 +89,7 @@ if st.session_state.logueado and not st.session_state.confirmar_salida:
         unsafe_allow_html=True
     )
 
-# 🕒 Gestión de jornada (usuario normal)
+# 🕒 Panel de gestión de jornada (usuario normal)
 if st.session_state.logueado and st.session_state.usuario != "Administrador" and not st.session_state.confirmar_salida:
     st.title("🕒 Gestión de Jornada")
 
@@ -138,14 +138,12 @@ if st.session_state.logueado and st.session_state.usuario != "Administrador" and
     st.markdown("---")
     if st.button("🚪 Salir"):
         st.session_state.confirmar_salida = True
-
-# 📋 Panel administrativo
+        # 📋 Panel administrativo
 if st.session_state.logueado and st.session_state.usuario == "Administrador" and not st.session_state.confirmar_salida:
     st.title("📋 Panel Administrativo")
     st.info("Bienvenido, Administrador. Puedes filtrar, visualizar y descargar los registros.")
 
     datos = cargar_datos()
-
     bodegas = [
         "Bodega Barrio Cuba", "CEDI Coyol", "Bodega Cañas",
         "Bodega Coto", "Bodega San Carlos", "Bodega Pérez Zeledon"
@@ -192,4 +190,45 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
         )
         datos_historial = datos_historial.dropna(subset=[columna_horas_extras, "usuario", "bodega"])
 
-        bodegas
+        bodegas_disp = sorted(datos_historial["bodega"].unique().tolist())
+        usuarios_disp = sorted(datos_historial["usuario"].unique().tolist())
+
+        bodega_hist = st.selectbox("Filtrar por bodega (Historial)", ["Todas"] + bodegas_disp)
+        usuario_hist = st.selectbox("Filtrar por usuario (Historial)", ["Todos"] + usuarios_disp)
+
+        df_filtrado = datos_historial.copy()
+        if bodega_hist != "Todas":
+            df_filtrado = df_filtrado[df_filtrado["bodega"] == bodega_hist]
+        if usuario_hist != "Todos":
+            df_filtrado = df_filtrado[df_filtrado["usuario"] == usuario_hist]
+
+        resumen = (
+            df_filtrado.groupby("usuario")[columna_horas_extras]
+            .sum()
+            .reset_index()
+            .dropna(subset=[columna_horas_extras])
+        )
+        resumen = resumen[resumen[columna_horas_extras] > 0]
+
+        if resumen.empty:
+            st.info("ℹ️ No hay horas extras registradas según los filtros seleccionados.")
+        else:
+            st.markdown("### 📈 Horas Extras por Usuario")
+            st.bar_chart(resumen.set_index("usuario"))
+
+    st.markdown("---")
+    if st.button("🚪 Salir"):
+        st.session_state.confirmar_salida = True
+
+# 🌤️ Confirmación de salida y mensaje de despedida
+if st.session_state.confirmar_salida:
+    st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("✅ Sí, cerrar sesión"):
+            st.success("¡Hasta pronto! 👋 La sesión se ha cerrado correctamente.")
+            st.session_state.clear()
+            st.stop()
+    with col2:
+        if st.button("↩️ No, regresar"):
+            st.session_state.confirmar_salida = False
