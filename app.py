@@ -49,8 +49,8 @@ def actualizar_hora_cierre(fecha, usuario, bodega, hora_cierre):
         if (fila_dict.get("fecha") == fecha and
             fila_dict.get("usuario") == usuario and
             fila_dict.get("bodega") == bodega and
-            not fila_dict.get("hoa cierre")):
-            col_idx = encabezados.index("hoa cierre") + 1
+            not fila_dict.get("hora cierre")):
+            col_idx = encabezados.index("hora cierre") + 1
             sheet.update_cell(idx, col_idx, hora_cierre)
             return True
     return False
