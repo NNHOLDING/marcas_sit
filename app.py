@@ -5,7 +5,7 @@ import pytz
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# 🎛️ Configuración de la aplicación con ícono personalizado
+# 🎛️ Configuración de la aplicación con ícono
 st.set_page_config(
     page_title="Smart Intelligence Tools",
     page_icon="https://raw.githubusercontent.com/NNHOLDING/marcas_sit/main/NN25.ico",
@@ -90,8 +90,17 @@ if not st.session_state.logueado:
         else:
             st.error("Credenciales incorrectas")
 
+# 🖼️ Logo institucional
+if st.session_state.logueado and not st.session_state.confirmar_salida:
+    st.markdown(
+        "<div style='text-align: center;'>"
+        "<img src='https://raw.githubusercontent.com/NNHOLDING/marcas_sit/main/logoNN.PNG' width='250'>"
+        "</div>",
+        unsafe_allow_html=True
+    )
+
 # 🕒 Gestión de jornada (usuarios normales)
-if st.session_state.logueado and st.session_state.usuario != "Administrador":
+if st.session_state.logueado and st.session_state.usuario != "Administrador" and not st.session_state.confirmar_salida:
     st.title("🕒 Gestión de Jornada")
 
     now_cr = datetime.now(cr_timezone)
@@ -145,7 +154,7 @@ if st.session_state.logueado and st.session_state.usuario != "Administrador":
         st.session_state.confirmar_salida = True
 
 # 🛠️ Panel exclusivo para Administrador
-if st.session_state.logueado and st.session_state.usuario == "Administrador":
+if st.session_state.logueado and st.session_state.usuario == "Administrador" and not st.session_state.confirmar_salida:
     st.title("📋 Panel Administrativo")
     st.info("Bienvenido, Administrador. Puedes filtrar, visualizar y descargar las jornadas registradas.")
 
@@ -196,13 +205,5 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador":
     if st.button("🚪 Salir"):
         st.session_state.confirmar_salida = True
 
-# 🌤️ Confirmación y cierre de sesión
-if st.session_state.confirmar_salida:
-    st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
-    if st.button("✅ Sí, cerrar sesión"):
-        st.success("¡Hasta pronto! La sesión se cerró correctamente.")
-        st.session_state.clear()
-        st.stop()
-    elif st.button("↩️ No, volver"):
-        st.session_state.confirmar_salida = False
-        st.success("Perfecto, continuamos 😊")
+# 🌤️ Confirmación de salida y despedida
+if st.session_state.confirmar_salida
