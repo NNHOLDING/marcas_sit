@@ -19,15 +19,21 @@ def conectar_hoja():
     ).worksheet("Jornadas")
     return sheet
 
-# 📥 Cargar datos existentes
+# 📥 Cargar datos existentes (resistente a hoja vacía)
 def cargar_datos():
     sheet = conectar_hoja()
-    data = sheet.get_all_records()
-    df = pd.DataFrame(data)
-    df.columns = [col.lower() for col in df.columns]
+    registros = sheet.get_all_values()
+
+    if len(registros) < 2:
+        st.warning("📂 La hoja 'Jornadas' está vacía. Puedes registrar nuevos datos.")
+        return pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "hoa cierre"])
+
+    encabezados = [col.lower() for col in registros[0]]
+    filas = registros[1:]
+    df = pd.DataFrame(filas, columns=encabezados)
     return df
 
-# 📤 Agregar nueva fila
+# 📤 Agregar nueva fila al iniciar jornada
 def agregar_fila_inicio(fecha, usuario, bodega, hora_inicio):
     sheet = conectar_hoja()
     fila = [fecha, usuario, bodega, hora_inicio, ""]
@@ -79,10 +85,6 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
     bodega = st.selectbox("Selecciona la bodega", bodegas)
 
     datos = cargar_datos()
-
-    if datos.empty:
-        st.warning("📂 La hoja está vacía. Puedes registrar tu jornada.")
-        datos = pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "hoa cierre"])
 
     registro_existente = datos[
         (datos['usuario'] == st.session_state.usuario) &
