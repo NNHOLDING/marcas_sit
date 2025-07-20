@@ -19,40 +19,47 @@ def conectar_hoja():
     ).worksheet("Jornadas")
     return sheet
 
-# 📥 Cargar datos existentes (resistente a hoja vacía)
+# 📥 Cargar datos existentes (funciona aunque la hoja esté vacía)
 def cargar_datos():
     sheet = conectar_hoja()
     registros = sheet.get_all_values()
 
     if len(registros) < 2:
         st.warning("📂 La hoja 'Jornadas' está vacía. Puedes registrar nuevos datos.")
-        return pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "hoa cierre"])
+        return pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "fecha cierre"])
 
-    encabezados = [col.lower() for col in registros[0]]
+    encabezados = [col.lower().strip() for col in registros[0]]
     filas = registros[1:]
     df = pd.DataFrame(filas, columns=encabezados)
     return df
 
-# 📤 Agregar nueva fila al iniciar jornada
+# 📌 Agregar fila al iniciar jornada
 def agregar_fila_inicio(fecha, usuario, bodega, hora_inicio):
     sheet = conectar_hoja()
     fila = [fecha, usuario, bodega, hora_inicio, ""]
     sheet.append_row(fila)
 
-# ✏️ Actualizar hora de cierre en fila existente
-def actualizar_hora_cierre(fecha, usuario, bodega, hora_cierre):
+# ✅ Actualizar campo 'fecha cierre' en la fila correspondiente
+def actualizar_fecha_cierre(fecha, usuario, bodega, fecha_cierre):
     sheet = conectar_hoja()
     registros = sheet.get_all_values()
-    encabezados = [col.lower() for col in registros[0]]
+    encabezados = [col.lower().strip() for col in registros[0]]
+
+    if "fecha cierre" not in encabezados:
+        st.error("⚠️ La columna 'fecha cierre' no está en la hoja. Verifica los encabezados.")
+        return False
+
     for idx, fila in enumerate(registros[1:], start=2):
         fila_dict = dict(zip(encabezados, fila))
         if (fila_dict.get("fecha") == fecha and
             fila_dict.get("usuario") == usuario and
             fila_dict.get("bodega") == bodega and
-            not fila_dict.get("hora cierre")):
-            col_idx = encabezados.index("hora cierre") + 1
-            sheet.update_cell(idx, col_idx, hora_cierre)
+            not fila_dict.get("fecha cierre")):
+            col_idx = encabezados.index("fecha cierre") + 1
+            sheet.update_cell(idx, col_idx, fecha_cierre)
             return True
+
+    st.warning("No se encontró una fila para actualizar. Verifica que hayas iniciado jornada.")
     return False
 
 # 🔐 Login
@@ -103,23 +110,21 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
                 st.warning("Ya registraste el inicio de jornada para hoy.")
             else:
                 agregar_fila_inicio(fecha_actual, st.session_state.usuario, bodega, hora_actual)
-                st.success(f"Inicio de jornada registrado a las {hora_actual}")
-                st.info(f"Usuario: {st.session_state.usuario} | Bodega: {bodega} | Fecha: {fecha_actual}")
+                st.success(f"Inicio registrado a las {hora_actual}")
 
     with col2:
         if st.button("✅ Cerrar jornada"):
             hora_actual = datetime.now().strftime("%H:%M:%S")
             if registro_existente.empty:
-                st.warning("Primero debes registrar el inicio de jornada.")
-            elif registro_existente.iloc[0].get("hoa cierre", "") != "":
-                st.warning("Ya cerraste la jornada para hoy.")
+                st.warning("Debes iniciar jornada antes de cerrarla.")
+            elif registro_existente.iloc[0].get("fecha cierre", "") != "":
+                st.warning("Ya has cerrado la jornada de hoy.")
             else:
-                actualizado = actualizar_hora_cierre(fecha_actual, st.session_state.usuario, bodega, hora_actual)
+                actualizado = actualizar_fecha_cierre(fecha_actual, st.session_state.usuario, bodega, hora_actual)
                 if actualizado:
                     st.success(f"Jornada cerrada correctamente a las {hora_actual}")
-                    st.info(f"Cierre registrado para {st.session_state.usuario} a las {hora_actual}")
                 else:
-                    st.error("No se pudo actualizar la hora de cierre. Verifica los datos.")
+                    st.error("No se pudo registrar el cierre. Verifica que hayas iniciado jornada.")
 
     st.markdown("---")
     if st.button("🚪 Salir"):
