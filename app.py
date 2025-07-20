@@ -88,7 +88,7 @@ if not st.session_state.logueado:
     usuario = st.text_input("Usuario")
     password = st.text_input("Contraseña", type="password")
     if st.button("Ingresar"):
-        if (usuario == "JB" and password == "1234") or (usuario == "Administradr" and password == "Administrador"):
+        if (usuario == "JB" and password == "1234") or (usuario == "Administrador" and password == "Administrador"):
             st.session_state.logueado = True
             st.session_state.usuario = usuario
         else:
