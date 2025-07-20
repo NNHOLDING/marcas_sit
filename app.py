@@ -76,7 +76,6 @@ def actualizar_fecha_cierre(fecha, usuario, bodega, fecha_cierre):
 # 🔐 Login
 if 'logueado' not in st.session_state:
     st.session_state.logueado = False
-
 if 'confirmar_salida' not in st.session_state:
     st.session_state.confirmar_salida = False
 
@@ -197,13 +196,13 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador":
     if st.button("🚪 Salir"):
         st.session_state.confirmar_salida = True
 
-# 💬 Despedida y confirmación de cierre
+# 🌤️ Confirmación y cierre de sesión
 if st.session_state.confirmar_salida:
-    st.markdown("## ☕ ¿Estás seguro que deseas cerrar sesión?")
-    if st.button("Sí, cerrar sesión"):
+    st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
+    if st.button("✅ Sí, cerrar sesión"):
         st.success("¡Hasta pronto! La sesión se cerró correctamente.")
         st.session_state.clear()
-        st.experimental_rerun()
-    elif st.button("No, volver"):
+        st.stop()
+    elif st.button("↩️ No, volver"):
         st.session_state.confirmar_salida = False
-        st.experimental_rerun()
+        st.success("Perfecto, continuamos 😊")
