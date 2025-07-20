@@ -34,10 +34,8 @@ def conectar_hoja():
 def cargar_datos():
     sheet = conectar_hoja()
     registros = sheet.get_all_values()
-
     if len(registros) < 2:
         return pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "fecha cierre"])
-
     encabezados = [col.lower().strip() for col in registros[0]]
     filas = registros[1:]
     return pd.DataFrame(filas, columns=encabezados)
@@ -51,10 +49,8 @@ def actualizar_fecha_cierre(fecha, usuario, bodega, fecha_cierre):
     sheet = conectar_hoja()
     registros = sheet.get_all_values()
     encabezados = [col.lower().strip() for col in registros[0]]
-
     if "fecha cierre" not in encabezados:
         return False
-
     for idx, fila in enumerate(registros[1:], start=2):
         fila_dict = dict(zip(encabezados, fila))
         if (fila_dict.get("fecha") == fecha and
@@ -93,7 +89,7 @@ if st.session_state.logueado and not st.session_state.confirmar_salida:
         unsafe_allow_html=True
     )
 
-# 🕒 Panel de gestión de jornada (usuario)
+# 🕒 Gestión de jornada (usuario normal)
 if st.session_state.logueado and st.session_state.usuario != "Administrador" and not st.session_state.confirmar_salida:
     st.title("🕒 Gestión de Jornada")
 
@@ -127,7 +123,6 @@ if st.session_state.logueado and st.session_state.usuario != "Administrador" and
             else:
                 agregar_fila_inicio(fecha_actual, st.session_state.usuario, bodega, hora_actual)
                 st.success(f"Inicio registrado a las {hora_actual}")
-
     with col2:
         if st.button("✅ Cerrar jornada"):
             if registro_existente.empty:
@@ -183,64 +178,16 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
         st.info("No hay registros para los filtros seleccionados.")
 
     st.markdown("---")
-        # 🗂️ Submenú: Historial de horas extras
+
+    # 📊 Historial de Horas Extras
     st.markdown("## 📊 Historial de Horas Extras")
+    datos_historial = cargar_datos()
+    columna_horas_extras = "total horas extras"
 
-    # 🗂️ Submenú: Historial de horas extras
-st.markdown("## 📊 Historial de Horas Extras")
-
-datos_historial = cargar_datos()
-
-# Verificamos que la columna exista
-columna_horas_extras = "total horas extras"
-if columna_horas_extras not in datos_historial.columns:
-    st.warning("⚠️ La hoja no contiene una columna llamada 'Total horas extras'.")
-else:
-    # Convertir a numérico, si es posible
-    datos_historial[columna_horas_extras] = pd.to_numeric(
-        datos_historial[columna_horas_extras], errors="coerce"
-    )
-
-    # Eliminar NaN y usuarios vacíos
-    datos_historial = datos_historial.dropna(subset=[columna_horas_extras, "usuario", "bodega"])
-
-    # Filtros dinámicos
-    bodegas_disp = sorted(datos_historial["bodega"].unique().tolist())
-    usuarios_disp = sorted(datos_historial["usuario"].unique().tolist())
-
-    bodega_hist = st.selectbox("Filtrar por bodega", ["Todas"] + bodegas_disp)
-    usuario_hist = st.selectbox("Filtrar por usuario", ["Todos"] + usuarios_disp)
-
-    df_filtrado = datos_historial.copy()
-    if bodega_hist != "Todas":
-        df_filtrado = df_filtrado[df_filtrado["bodega"] == bodega_hist]
-    if usuario_hist != "Todos":
-        df_filtrado = df_filtrado[df_filtrado["usuario"] == usuario_hist]
-
-    # Agrupar y sumar
-    resumen = (
-        df_filtrado.groupby("usuario")[columna_horas_extras]
-        .sum()
-        .reset_index()
-        .dropna(subset=[columna_horas_extras])
-    )
-
-    resumen = resumen[resumen[columna_horas_extras] > 0]
-
-    if resumen.empty:
-        st.info("ℹ️ No hay horas extras registradas según los filtros seleccionados.")
+    if columna_horas_extras not in datos_historial.columns:
+        st.warning("⚠️ La hoja no contiene una columna llamada 'Total horas extras'.")
     else:
-        st.markdown("### 📈 Horas Extras por Usuario")
-        st.bar_chart(resumen.set_index("usuario"))
-# 🌤️ Confirmación de salida y mensaje de despedida
-if st.session_state.confirmar_salida:
-    st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✅ Sí, cerrar sesión"):
-            st.success("¡Hasta pronto! 👋 La sesión se ha cerrado correctamente.")
-            st.session_state.clear()
-            st.stop()
-    with col2:
-        if st.button("↩️ No, regresar"):
-            st.session_state.confirmar_salida = False
+        datos_historial[columna_horas_extras] = pd.to_numeric(
+            datos_historial[columna_horas_extras], errors="coerce"
+        )
+        datos_historial = datos_historial.dropna(subset=[columna_h
