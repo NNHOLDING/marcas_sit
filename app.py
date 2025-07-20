@@ -1,8 +1,26 @@
 import streamlit as st
+st.set_page_config(
+    page_title="Smart Intelligence Tools",
+    page_icon="NN25.ico",
+    layout="centered"
+)
+
+# 🖼️ Inserta ícono personalizado desde GitHub
+st.markdown("""
+<link rel="shortcut icon" href="https://raw.githubusercontent.com/NNHOLDING/alisto_app/main/NN25.ico">
+""", unsafe_allow_html=True)
+
+# 🖌️ Estilo personalizado
+st.markdown("""
+<style>
 import pandas as pd
 from datetime import datetime
+import pytz
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+
+# 🕘 Hora local Costa Rica
+cr_timezone = pytz.timezone("America/Costa_Rica")
 
 # 🔗 Conexión con Google Sheets
 def conectar_hoja():
@@ -19,7 +37,7 @@ def conectar_hoja():
     ).worksheet("Jornadas")
     return sheet
 
-# 📥 Cargar datos existentes (funciona aunque la hoja esté vacía)
+# 📥 Cargar datos existentes
 def cargar_datos():
     sheet = conectar_hoja()
     registros = sheet.get_all_values()
@@ -77,11 +95,14 @@ if not st.session_state.logueado:
         else:
             st.error("Credenciales incorrectas")
 
-# 🕘 Página de gestión regular
+# 🕒 Página de gestión de jornada
 if st.session_state.logueado and st.session_state.usuario != "Administradr":
     st.title("🕒 Gestión de Jornada")
 
-    fecha_actual = datetime.now().date().strftime("%Y-%m-%d")
+    now_cr = datetime.now(cr_timezone)
+    fecha_actual = now_cr.strftime("%Y-%m-%d")
+    hora_actual = now_cr.strftime("%H:%M:%S")
+
     st.text_input("Usuario", value=st.session_state.usuario, disabled=True)
     st.text_input("Fecha", value=fecha_actual, disabled=True)
 
@@ -103,7 +124,6 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
 
     with col1:
         if st.button("📌 Iniciar jornada"):
-            hora_actual = datetime.now().strftime("%H:%M:%S")
             if not bodega.strip():
                 st.warning("Debes seleccionar una bodega.")
             elif not registro_existente.empty:
@@ -114,7 +134,6 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
 
     with col2:
         if st.button("✅ Cerrar jornada"):
-            hora_actual = datetime.now().strftime("%H:%M:%S")
             if registro_existente.empty:
                 st.warning("Debes iniciar jornada antes de cerrarla.")
             elif registro_existente.iloc[0].get("fecha cierre", "") != "":
