@@ -186,35 +186,52 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
         # 🗂️ Submenú: Historial de horas extras
     st.markdown("## 📊 Historial de Horas Extras")
 
-    datos_historial = cargar_datos()
+    # 🗂️ Submenú: Historial de horas extras
+st.markdown("## 📊 Historial de Horas Extras")
 
-    if "total horas extras" not in datos_historial.columns:
-        st.warning("La hoja no contiene una columna llamada 'Total horas extras'.")
+datos_historial = cargar_datos()
+
+# Verificamos que la columna exista
+columna_horas_extras = "total horas extras"
+if columna_horas_extras not in datos_historial.columns:
+    st.warning("⚠️ La hoja no contiene una columna llamada 'Total horas extras'.")
+else:
+    # Convertir a numérico, si es posible
+    datos_historial[columna_horas_extras] = pd.to_numeric(
+        datos_historial[columna_horas_extras], errors="coerce"
+    )
+
+    # Eliminar NaN y usuarios vacíos
+    datos_historial = datos_historial.dropna(subset=[columna_horas_extras, "usuario", "bodega"])
+
+    # Filtros dinámicos
+    bodegas_disp = sorted(datos_historial["bodega"].unique().tolist())
+    usuarios_disp = sorted(datos_historial["usuario"].unique().tolist())
+
+    bodega_hist = st.selectbox("Filtrar por bodega", ["Todas"] + bodegas_disp)
+    usuario_hist = st.selectbox("Filtrar por usuario", ["Todos"] + usuarios_disp)
+
+    df_filtrado = datos_historial.copy()
+    if bodega_hist != "Todas":
+        df_filtrado = df_filtrado[df_filtrado["bodega"] == bodega_hist]
+    if usuario_hist != "Todos":
+        df_filtrado = df_filtrado[df_filtrado["usuario"] == usuario_hist]
+
+    # Agrupar y sumar
+    resumen = (
+        df_filtrado.groupby("usuario")[columna_horas_extras]
+        .sum()
+        .reset_index()
+        .dropna(subset=[columna_horas_extras])
+    )
+
+    resumen = resumen[resumen[columna_horas_extras] > 0]
+
+    if resumen.empty:
+        st.info("ℹ️ No hay horas extras registradas según los filtros seleccionados.")
     else:
-        datos_historial["total horas extras"] = pd.to_numeric(datos_historial["total horas extras"], errors="coerce")
-
-        bodega_opciones = datos_historial["bodega"].dropna().unique().tolist()
-        usuario_opciones = datos_historial["usuario"].dropna().unique().tolist()
-
-        bodega_hist = st.selectbox("Filtrar por bodega", ["Todas"] + bodega_opciones)
-        usuario_hist = st.selectbox("Filtrar por usuario", ["Todos"] + usuario_opciones)
-
-        df_filtrado = datos_historial.copy()
-        if bodega_hist != "Todas":
-            df_filtrado = df_filtrado[df_filtrado["bodega"] == bodega_hist]
-        if usuario_hist != "Todos":
-            df_filtrado = df_filtrado[df_filtrado["usuario"] == usuario_hist]
-
-        resumen = df_filtrado.groupby("usuario")["total horas extras"].sum().reset_index()
-
-        if resumen.empty:
-            st.info("No hay datos para mostrar según los filtros seleccionados.")
-        else:
-            st.markdown("### 📈 Horas Extras por Usuario")
-            st.bar_chart(resumen.set_index("usuario"))
-    if st.button("🚪 Salir"):
-        st.session_state.confirmar_salida = True
-
+        st.markdown("### 📈 Horas Extras por Usuario")
+        st.bar_chart(resumen.set_index("usuario"))
 # 🌤️ Confirmación de salida y mensaje de despedida
 if st.session_state.confirmar_salida:
     st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
