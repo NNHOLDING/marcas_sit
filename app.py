@@ -24,14 +24,30 @@ def cargar_datos():
     sheet = conectar_hoja()
     data = sheet.get_all_records()
     df = pd.DataFrame(data)
-    df.columns = [col.lower() for col in df.columns]  # Estandarizar nombres
+    df.columns = [col.lower() for col in df.columns]
     return df
 
 # 📤 Agregar nueva fila
-def agregar_fila_google(fecha, usuario, bodega, hora_inicio, hora_cierre):
+def agregar_fila_inicio(fecha, usuario, bodega, hora_inicio):
     sheet = conectar_hoja()
-    fila = [fecha, usuario, bodega, hora_inicio, hora_cierre]
+    fila = [fecha, usuario, bodega, hora_inicio, ""]
     sheet.append_row(fila)
+
+# ✏️ Actualizar hora de cierre en fila existente
+def actualizar_hora_cierre(fecha, usuario, bodega, hora_cierre):
+    sheet = conectar_hoja()
+    registros = sheet.get_all_values()
+    encabezados = [col.lower() for col in registros[0]]
+    for idx, fila in enumerate(registros[1:], start=2):
+        fila_dict = dict(zip(encabezados, fila))
+        if (fila_dict.get("fecha") == fecha and
+            fila_dict.get("usuario") == usuario and
+            fila_dict.get("bodega") == bodega and
+            not fila_dict.get("hoa cierre")):
+            col_idx = encabezados.index("hoa cierre") + 1
+            sheet.update_cell(idx, col_idx, hora_cierre)
+            return True
+    return False
 
 # 🔐 Login
 if 'logueado' not in st.session_state:
@@ -64,18 +80,14 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
 
     datos = cargar_datos()
 
-    # Validación flexible para hojas vacías o mal configuradas
     if datos.empty:
-        st.warning("⚠️ La hoja 'Jornadas' está vacía. Puedes registrar tu jornada.")
-        datos = pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "hoa cierre"])
-    elif 'usuario' not in datos.columns or 'fecha' not in datos.columns:
-        st.warning("⚠️ La hoja tiene registros, pero no contiene las columnas 'usuario' y 'fecha'.")
-        st.write("Columnas detectadas:", datos.columns.tolist())
+        st.warning("📂 La hoja está vacía. Puedes registrar tu jornada.")
         datos = pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "hoa cierre"])
 
     registro_existente = datos[
         (datos['usuario'] == st.session_state.usuario) &
-        (datos['fecha'] == fecha_actual)
+        (datos['fecha'] == fecha_actual) &
+        (datos['bodega'] == bodega)
     ]
 
     col1, col2 = st.columns(2)
@@ -88,9 +100,9 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
             elif not registro_existente.empty:
                 st.warning("Ya registraste el inicio de jornada para hoy.")
             else:
-                agregar_fila_google(fecha_actual, st.session_state.usuario, bodega, hora_actual, "")
+                agregar_fila_inicio(fecha_actual, st.session_state.usuario, bodega, hora_actual)
                 st.success(f"Inicio de jornada registrado a las {hora_actual}")
-                st.info(f"Usuario: {st.session_state.usuario} | Bodega: {bodega} | Fecha: {fecha_actual} | Hora Inicio: {hora_actual}")
+                st.info(f"Usuario: {st.session_state.usuario} | Bodega: {bodega} | Fecha: {fecha_actual}")
 
     with col2:
         if st.button("✅ Cerrar jornada"):
@@ -100,73 +112,12 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
             elif registro_existente.iloc[0].get("hoa cierre", "") != "":
                 st.warning("Ya cerraste la jornada para hoy.")
             else:
-                agregar_fila_google(
-                    fecha_actual,
-                    st.session_state.usuario,
-                    bodega,
-                    registro_existente.iloc[0].get("hora inicio", ""),
-                    hora_actual
-                )
-                st.success(f"Jornada cerrada correctamente a las {hora_actual}")
-                st.info(f"Cierre registrado para {st.session_state.usuario} a las {hora_actual}")
-
-    st.markdown("---")
-    if st.button("🚪 Salir"):
-        st.session_state.clear()
-        st.stop()
-
-# 🛠️ Panel de administración
-if st.session_state.logueado and st.session_state.usuario == "Administradr":
-    st.title("📋 Panel de Administración")
-
-    bodegas = [
-        "Bodega Barrio Cuba", "CEDI Coyol", "Bodega Cañas",
-        "Bodega Coto", "Bodega San Carlos", "Bodega Pérez Zeledon"
-    ]
-
-    datos = cargar_datos()
-
-    if datos.empty:
-        st.info("📂 La hoja está vacía. No hay registros que mostrar.")
-        datos = pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "hoa cierre"])
-    elif 'bodega' not in datos.columns or 'fecha' not in datos.columns:
-        st.warning("⚠️ Columnas requeridas no detectadas. Verifica que la hoja contenga 'bodega' y 'fecha'.")
-        st.write("Columnas disponibles:", datos.columns.tolist())
-        datos = pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "hoa cierre"])
-
-    bodega_admin = st.selectbox("Filtrar por bodega", ["Todas"] + bodegas)
-    col1, col2 = st.columns(2)
-    with col1:
-        fecha_inicio = st.date_input("Fecha inicio", value=datetime.now().date())
-    with col2:
-        fecha_fin = st.date_input("Fecha fin", value=datetime.now().date())
-
-    datos_filtrados = datos.copy()
-
-    if bodega_admin != "Todas":
-        datos_filtrados = datos_filtrados[datos_filtrados["bodega"] == bodega_admin]
-
-    datos_filtrados["fecha"] = pd.to_datetime(datos_filtrados["fecha"], errors="coerce")
-    datos_filtrados = datos_filtrados[
-        (datos_filtrados["fecha"].dt.date >= fecha_inicio) &
-        (datos_filtrados["fecha"].dt.date <= fecha_fin)
-    ]
-
-    st.markdown("### 📑 Resultados filtrados")
-    if not datos_filtrados.empty:
-        st.dataframe(datos_filtrados)
-
-        csv = datos_filtrados.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            label="📥 Descargar resultados en CSV",
-            data=csv,
-            file_name="jornada_filtrada.csv",
-            mime="text/csv"
-        )
-
-        st.success(f"Se encontraron {len(datos_filtrados)} registros.")
-    else:
-        st.info("No hay registros que coincidan con los filtros seleccionados.")
+                actualizado = actualizar_hora_cierre(fecha_actual, st.session_state.usuario, bodega, hora_actual)
+                if actualizado:
+                    st.success(f"Jornada cerrada correctamente a las {hora_actual}")
+                    st.info(f"Cierre registrado para {st.session_state.usuario} a las {hora_actual}")
+                else:
+                    st.error("No se pudo actualizar la hora de cierre. Verifica los datos.")
 
     st.markdown("---")
     if st.button("🚪 Salir"):
