@@ -190,4 +190,6 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
         datos_historial[columna_horas_extras] = pd.to_numeric(
             datos_historial[columna_horas_extras], errors="coerce"
         )
-        datos_historial = datos_historial.dropna(subset=[columna_h
+        datos_historial = datos_historial.dropna(subset=[columna_horas_extras, "usuario", "bodega"])
+
+        bodegas
