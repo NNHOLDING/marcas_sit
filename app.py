@@ -23,7 +23,9 @@ def conectar_hoja():
 def cargar_datos():
     sheet = conectar_hoja()
     data = sheet.get_all_records()
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    df.columns = [col.lower() for col in df.columns]  # Estandarizar nombres
+    return df
 
 # 📤 Agregar nueva fila
 def agregar_fila_google(fecha, usuario, bodega, hora_inicio, hora_cierre):
@@ -62,8 +64,8 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
 
     datos = cargar_datos()
 
-    if 'Usuario' not in datos.columns or 'Fecha' not in datos.columns:
-        st.error("⚠️ La hoja de cálculo no tiene las columnas 'Usuario' y 'Fecha'.")
+    if 'usuario' not in datos.columns or 'fecha' not in datos.columns:
+        st.error("⚠️ La hoja de cálculo no tiene las columnas 'usuario' y 'fecha'.")
         st.write("Columnas encontradas:", datos.columns.tolist())
         st.stop()
 
@@ -91,14 +93,14 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
             hora_actual = datetime.now().strftime("%H:%M:%S")
             if registro_existente.empty:
                 st.warning("Primero debes registrar el inicio de jornada.")
-            elif registro_existente.iloc[0].get("Hora Cierre", "") != "":
+            elif registro_existente.iloc[0].get("hoa cierre", "") != "":
                 st.warning("Ya cerraste la jornada para hoy.")
             else:
                 agregar_fila_google(
                     fecha_actual,
                     st.session_state.usuario,
                     bodega,
-                    registro_existente.iloc[0].get("Hora Inicio", ""),
+                    registro_existente.iloc[0].get("hora inicio", ""),
                     hora_actual
                 )
                 st.success(f"Jornada cerrada correctamente a las {hora_actual}")
@@ -120,7 +122,7 @@ if st.session_state.logueado and st.session_state.usuario == "Administradr":
 
     datos = cargar_datos()
 
-    if 'Bodega' not in datos.columns or 'Fecha' not in datos.columns:
+    if 'bodega' not in datos.columns or 'fecha' not in datos.columns:
         st.error("⚠️ La hoja de cálculo no tiene las columnas necesarias para filtrar.")
         st.write("Columnas encontradas:", datos.columns.tolist())
         st.stop()
@@ -135,12 +137,12 @@ if st.session_state.logueado and st.session_state.usuario == "Administradr":
     datos_filtrados = datos.copy()
 
     if bodega_admin != "Todas":
-        datos_filtrados = datos_filtrados[datos_filtrados["Bodega"] == bodega_admin]
+        datos_filtrados = datos_filtrados[datos_filtrados["bodega"] == bodega_admin]
 
-    datos_filtrados["Fecha"] = pd.to_datetime(datos_filtrados["Fecha"], errors="coerce")
+    datos_filtrados["fecha"] = pd.to_datetime(datos_filtrados["fecha"], errors="coerce")
     datos_filtrados = datos_filtrados[
-        (datos_filtrados["Fecha"].dt.date >= fecha_inicio) &
-        (datos_filtrados["Fecha"].dt.date <= fecha_fin)
+        (datos_filtrados["fecha"].dt.date >= fecha_inicio) &
+        (datos_filtrados["fecha"].dt.date <= fecha_fin)
     ]
 
     st.markdown("### 📑 Resultados filtrados")
