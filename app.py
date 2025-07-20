@@ -88,7 +88,7 @@ if not st.session_state.logueado:
 if st.session_state.logueado and not st.session_state.confirmar_salida:
     st.markdown(
         "<div style='text-align: center;'>"
-        "<img src='https://raw.githubusercontent.com/NNHOLDING/marcas_sit/main/27NN.PNG' width='250'>"
+        "<img src='https://raw.githubusercontent.com/NNHOLDING/marcas_sit/main/logotipoNN.PNG' width='250'>"
         "</div>",
         unsafe_allow_html=True
     )
@@ -183,6 +183,35 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
         st.info("No hay registros para los filtros seleccionados.")
 
     st.markdown("---")
+        # 🗂️ Submenú: Historial de horas extras
+    st.markdown("## 📊 Historial de Horas Extras")
+
+    datos_historial = cargar_datos()
+
+    if "total horas extras" not in datos_historial.columns:
+        st.warning("La hoja no contiene una columna llamada 'Total horas extras'.")
+    else:
+        datos_historial["total horas extras"] = pd.to_numeric(datos_historial["total horas extras"], errors="coerce")
+
+        bodega_opciones = datos_historial["bodega"].dropna().unique().tolist()
+        usuario_opciones = datos_historial["usuario"].dropna().unique().tolist()
+
+        bodega_hist = st.selectbox("Filtrar por bodega", ["Todas"] + bodega_opciones)
+        usuario_hist = st.selectbox("Filtrar por usuario", ["Todos"] + usuario_opciones)
+
+        df_filtrado = datos_historial.copy()
+        if bodega_hist != "Todas":
+            df_filtrado = df_filtrado[df_filtrado["bodega"] == bodega_hist]
+        if usuario_hist != "Todos":
+            df_filtrado = df_filtrado[df_filtrado["usuario"] == usuario_hist]
+
+        resumen = df_filtrado.groupby("usuario")["total horas extras"].sum().reset_index()
+
+        if resumen.empty:
+            st.info("No hay datos para mostrar según los filtros seleccionados.")
+        else:
+            st.markdown("### 📈 Horas Extras por Usuario")
+            st.bar_chart(resumen.set_index("usuario"))
     if st.button("🚪 Salir"):
         st.session_state.confirmar_salida = True
 
