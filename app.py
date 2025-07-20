@@ -34,8 +34,10 @@ def conectar_hoja():
 def cargar_datos():
     sheet = conectar_hoja()
     registros = sheet.get_all_values()
+
     if len(registros) < 2:
         return pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "fecha cierre"])
+
     encabezados = [col.lower().strip() for col in registros[0]]
     filas = registros[1:]
     return pd.DataFrame(filas, columns=encabezados)
@@ -49,8 +51,10 @@ def actualizar_fecha_cierre(fecha, usuario, bodega, fecha_cierre):
     sheet = conectar_hoja()
     registros = sheet.get_all_values()
     encabezados = [col.lower().strip() for col in registros[0]]
+
     if "fecha cierre" not in encabezados:
         return False
+
     for idx, fila in enumerate(registros[1:], start=2):
         fila_dict = dict(zip(encabezados, fila))
         if (fila_dict.get("fecha") == fecha and
@@ -89,9 +93,10 @@ if st.session_state.logueado and not st.session_state.confirmar_salida:
         unsafe_allow_html=True
     )
 
-# 🕒 Gestión de jornada (usuario)
+# 🕒 Panel de gestión de jornada (usuario)
 if st.session_state.logueado and st.session_state.usuario != "Administrador" and not st.session_state.confirmar_salida:
     st.title("🕒 Gestión de Jornada")
+
     now_cr = datetime.now(cr_timezone)
     fecha_actual = now_cr.strftime("%Y-%m-%d")
     hora_actual = now_cr.strftime("%H:%M:%S")
@@ -130,8 +135,7 @@ if st.session_state.logueado and st.session_state.usuario != "Administrador" and
             elif registro_existente.iloc[0].get("fecha cierre", "") != "":
                 st.warning("Ya has cerrado la jornada de hoy.")
             else:
-                actualizado = actualizar_fecha_cierre(fecha_actual, st.session_state.usuario, bodega, hora_actual)
-                if actualizado:
+                if actualizar_fecha_cierre(fecha_actual, st.session_state.usuario, bodega, hora_actual):
                     st.success(f"Jornada cerrada correctamente a las {hora_actual}")
                 else:
                     st.error("No se pudo registrar el cierre.")
@@ -146,11 +150,13 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
     st.info("Bienvenido, Administrador. Puedes filtrar, visualizar y descargar los registros.")
 
     datos = cargar_datos()
+
     bodegas = [
         "Bodega Barrio Cuba", "CEDI Coyol", "Bodega Cañas",
         "Bodega Coto", "Bodega San Carlos", "Bodega Pérez Zeledon"
     ]
     bodega_admin = st.selectbox("Filtrar por bodega", ["Todas"] + bodegas)
+
     col1, col2 = st.columns(2)
     with col1:
         fecha_inicio = st.date_input("Fecha inicio", value=datetime.now(cr_timezone).date())
@@ -180,7 +186,7 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
     if st.button("🚪 Salir"):
         st.session_state.confirmar_salida = True
 
-# 🌤️ Confirmación de salida y despedida
+# 🌤️ Confirmación de salida y mensaje de despedida
 if st.session_state.confirmar_salida:
     st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
     col1, col2 = st.columns(2)
@@ -191,4 +197,4 @@ if st.session_state.confirmar_salida:
             st.stop()
     with col2:
         if st.button("↩️ No, regresar"):
-            st.session_state.confirmar_salida =
+            st.session_state.confirmar_salida = False
