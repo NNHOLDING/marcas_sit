@@ -5,7 +5,7 @@ import pytz
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# 🎛️ Configuración de la aplicación con ícono
+# 🎛️ Configuración de la aplicación
 st.set_page_config(
     page_title="Smart Intelligence Tools",
     page_icon="https://raw.githubusercontent.com/NNHOLDING/marcas_sit/main/NN25.ico",
@@ -34,32 +34,23 @@ def conectar_hoja():
 def cargar_datos():
     sheet = conectar_hoja()
     registros = sheet.get_all_values()
-
     if len(registros) < 2:
-        st.warning("📂 La hoja 'Jornadas' está vacía. Puedes registrar nuevos datos.")
         return pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "fecha cierre"])
-
     encabezados = [col.lower().strip() for col in registros[0]]
     filas = registros[1:]
-    df = pd.DataFrame(filas, columns=encabezados)
-    return df
+    return pd.DataFrame(filas, columns=encabezados)
 
 # 📌 Agregar fila al iniciar jornada
 def agregar_fila_inicio(fecha, usuario, bodega, hora_inicio):
-    sheet = conectar_hoja()
-    fila = [fecha, usuario, bodega, hora_inicio, ""]
-    sheet.append_row(fila)
+    conectar_hoja().append_row([fecha, usuario, bodega, hora_inicio, ""])
 
-# ✅ Actualizar campo 'fecha cierre' en la fila correspondiente
+# ✅ Actualizar campo 'fecha cierre'
 def actualizar_fecha_cierre(fecha, usuario, bodega, fecha_cierre):
     sheet = conectar_hoja()
     registros = sheet.get_all_values()
     encabezados = [col.lower().strip() for col in registros[0]]
-
     if "fecha cierre" not in encabezados:
-        st.error("⚠️ La columna 'fecha cierre' no está en la hoja. Verifica los encabezados.")
         return False
-
     for idx, fila in enumerate(registros[1:], start=2):
         fila_dict = dict(zip(encabezados, fila))
         if (fila_dict.get("fecha") == fecha and
@@ -69,16 +60,15 @@ def actualizar_fecha_cierre(fecha, usuario, bodega, fecha_cierre):
             col_idx = encabezados.index("fecha cierre") + 1
             sheet.update_cell(idx, col_idx, fecha_cierre)
             return True
-
-    st.warning("No se encontró una fila para actualizar. Verifica que hayas iniciado jornada.")
     return False
 
-# 🔐 Login
+# 🔐 Estado de sesión
 if 'logueado' not in st.session_state:
     st.session_state.logueado = False
 if 'confirmar_salida' not in st.session_state:
     st.session_state.confirmar_salida = False
 
+# 🔐 Login
 if not st.session_state.logueado:
     st.title("🔐 Login de usuario")
     usuario = st.text_input("Usuario")
@@ -94,15 +84,14 @@ if not st.session_state.logueado:
 if st.session_state.logueado and not st.session_state.confirmar_salida:
     st.markdown(
         "<div style='text-align: center;'>"
-        "<img src='https://raw.githubusercontent.com/NNHOLDING/marcas_sit/main/logoNN.PNG' width='250'>"
+        "<img src='https://raw.githubusercontent.com/NNHOLDING/marcas_sit/main/27NN.PNG' width='250'>"
         "</div>",
         unsafe_allow_html=True
     )
 
-# 🕒 Gestión de jornada (usuarios normales)
+# 🕒 Gestión de jornada (usuario)
 if st.session_state.logueado and st.session_state.usuario != "Administrador" and not st.session_state.confirmar_salida:
     st.title("🕒 Gestión de Jornada")
-
     now_cr = datetime.now(cr_timezone)
     fecha_actual = now_cr.strftime("%Y-%m-%d")
     hora_actual = now_cr.strftime("%H:%M:%S")
@@ -115,17 +104,15 @@ if st.session_state.logueado and st.session_state.usuario != "Administrador" and
         "Bodega Coto", "Bodega San Carlos", "Bodega Pérez Zeledon"
     ]
     bodega = st.selectbox("Selecciona la bodega", bodegas)
-
     datos = cargar_datos()
 
     registro_existente = datos[
-        (datos['usuario'] == st.session_state.usuario) &
-        (datos['fecha'] == fecha_actual) &
-        (datos['bodega'] == bodega)
+        (datos["usuario"] == st.session_state.usuario) &
+        (datos["fecha"] == fecha_actual) &
+        (datos["bodega"] == bodega)
     ]
 
     col1, col2 = st.columns(2)
-
     with col1:
         if st.button("📌 Iniciar jornada"):
             if not bodega.strip():
@@ -147,27 +134,23 @@ if st.session_state.logueado and st.session_state.usuario != "Administrador" and
                 if actualizado:
                     st.success(f"Jornada cerrada correctamente a las {hora_actual}")
                 else:
-                    st.error("No se pudo registrar el cierre. Verifica que hayas iniciado jornada.")
+                    st.error("No se pudo registrar el cierre.")
 
     st.markdown("---")
     if st.button("🚪 Salir"):
         st.session_state.confirmar_salida = True
 
-# 🛠️ Panel exclusivo para Administrador
+# 📋 Panel administrativo
 if st.session_state.logueado and st.session_state.usuario == "Administrador" and not st.session_state.confirmar_salida:
     st.title("📋 Panel Administrativo")
-    st.info("Bienvenido, Administrador. Puedes filtrar, visualizar y descargar las jornadas registradas.")
+    st.info("Bienvenido, Administrador. Puedes filtrar, visualizar y descargar los registros.")
 
     datos = cargar_datos()
-
     bodegas = [
         "Bodega Barrio Cuba", "CEDI Coyol", "Bodega Cañas",
         "Bodega Coto", "Bodega San Carlos", "Bodega Pérez Zeledon"
     ]
-
-    st.markdown("### 🔍 Filtros")
     bodega_admin = st.selectbox("Filtrar por bodega", ["Todas"] + bodegas)
-
     col1, col2 = st.columns(2)
     with col1:
         fecha_inicio = st.date_input("Fecha inicio", value=datetime.now(cr_timezone).date())
@@ -175,7 +158,6 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
         fecha_fin = st.date_input("Fecha fin", value=datetime.now(cr_timezone).date())
 
     datos_filtrados = datos.copy()
-
     if bodega_admin != "Todas":
         datos_filtrados = datos_filtrados[datos_filtrados["bodega"] == bodega_admin]
 
@@ -188,21 +170,25 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
     st.markdown("### 📑 Resultados filtrados")
     if not datos_filtrados.empty:
         st.dataframe(datos_filtrados)
-
         csv = datos_filtrados.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            label="📥 Descargar resultados en CSV",
-            data=csv,
-            file_name="jornadas_filtradas.csv",
-            mime="text/csv"
-        )
-
+        st.download_button("📥 Descargar CSV", csv, "jornadas_filtradas.csv", "text/csv")
         st.success(f"Se encontraron {len(datos_filtrados)} registros.")
     else:
-        st.info("No hay registros que coincidan con los filtros seleccionados.")
+        st.info("No hay registros para los filtros seleccionados.")
 
     st.markdown("---")
     if st.button("🚪 Salir"):
         st.session_state.confirmar_salida = True
 
-#
+# 🌤️ Confirmación de salida y despedida
+if st.session_state.confirmar_salida:
+    st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("✅ Sí, cerrar sesión"):
+            st.success("¡Hasta pronto! 👋 La sesión se ha cerrado correctamente.")
+            st.session_state.clear()
+            st.stop()
+    with col2:
+        if st.button("↩️ No, regresar"):
+            st.session_state.confirmar_salida =
