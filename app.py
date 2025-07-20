@@ -1,10 +1,4 @@
 import streamlit as st
-import pandas as pd
-from datetime import datetime
-import pytz
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-
 # 🎛️ Configuración de la aplicación
 st.set_page_config(
     page_title="Smart Intelligence Tools",
@@ -16,6 +10,13 @@ st.set_page_config(
 st.markdown("""
 <link rel="shortcut icon" href="https://raw.githubusercontent.com/NNHOLDING/alisto_app/main/NN25.ico">
 """, unsafe_allow_html=True)
+
+import pandas as pd
+from datetime import datetime
+import pytz
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
 
 # 🕘 Hora local Costa Rica
 cr_timezone = pytz.timezone("America/Costa_Rica")
