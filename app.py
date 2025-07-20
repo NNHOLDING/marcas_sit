@@ -1,22 +1,16 @@
 import streamlit as st
-# 🎛️ Configuración de la aplicación
-st.set_page_config(
-    page_title="Smart Intelligence Tools",
-    page_icon="NN25.ico",
-    layout="centered"
-)
-
-# 🖼️ Ícono personalizado desde GitHub
-st.markdown("""
-<link rel="shortcut icon" href="https://raw.githubusercontent.com/NNHOLDING/alisto_app/main/NN25.ico">
-""", unsafe_allow_html=True)
-
 import pandas as pd
 from datetime import datetime
 import pytz
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+# 🎛️ Configuración de la aplicación
+st.set_page_config(
+    page_title="Smart Intelligence Tools",
+    page_icon="https://raw.githubusercontent.com/NNHOLDING/alisto_app/main/NN25.ico",
+    layout="centered"
+)
 
 # 🕘 Hora local Costa Rica
 cr_timezone = pytz.timezone("America/Costa_Rica")
@@ -94,8 +88,8 @@ if not st.session_state.logueado:
         else:
             st.error("Credenciales incorrectas")
 
-# 🕒 Página de gestión de jornada
-if st.session_state.logueado and st.session_state.usuario != "Administradr":
+# 🕒 Página de gestión de jornada (usuarios normales)
+if st.session_state.logueado and st.session_state.usuario != "Administrador":
     st.title("🕒 Gestión de Jornada")
 
     now_cr = datetime.now(cr_timezone)
@@ -145,6 +139,25 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
                     st.error("No se pudo registrar el cierre. Verifica que hayas iniciado jornada.")
 
     st.markdown("---")
+    if st.button("🚪 Salir"):
+        st.session_state.clear()
+        st.stop()
+
+# 🛠️ Panel exclusivo para Administrador
+if st.session_state.logueado and st.session_state.usuario == "Administrador":
+    st.title("📋 Panel Administrativo")
+    st.info("Bienvenido, Administrador. Aquí podrás ver y gestionar las jornadas registradas.")
+    datos = cargar_datos()
+    st.dataframe(datos)
+
+    csv = datos.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="📥 Descargar datos en CSV",
+        data=csv,
+        file_name="jornadas_registradas.csv",
+        mime="text/csv"
+    )
+
     if st.button("🚪 Salir"):
         st.session_state.clear()
         st.stop()
