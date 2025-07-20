@@ -204,3 +204,5 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
     st.markdown("---")
     if st.button("🚪 Salir"):
         st.session_state.confirmar_salida = True
+
+#
