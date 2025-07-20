@@ -72,7 +72,13 @@ def actualizar_fecha_cierre(fecha, usuario, bodega, fecha_cierre):
 
     st.warning("No se encontró una fila para actualizar. Verifica que hayas iniciado jornada.")
     return False
-
+# Footer
+st.markdown("""
+<hr style="margin-top: 50px; border: none; border-top: 1px solid #ccc;" />
+<div style="text-align: center; color: gray; font-size: 0.9em; margin-top: 20px;">
+    NN HOLDING SOLUTIONS &copy; 2025, Todos los derechos reservados
+</div>
+""", unsafe_allow_html=True)
 # 🔐 Login
 if 'logueado' not in st.session_state:
     st.session_state.logueado = False
@@ -195,3 +201,10 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador":
     if st.button("🚪 Salir"):
         st.session_state.clear()
         st.stop()
+# Footer
+st.markdown("""
+<hr style="margin-top: 50px; border: none; border-top: 1px solid #ccc;" />
+<div style="text-align: center; color: gray; font-size: 0.9em; margin-top: 20px;">
+    NN HOLDING SOLUTIONS &copy; 2025, Todos los derechos reservados
+</div>
+""", unsafe_allow_html=True)
