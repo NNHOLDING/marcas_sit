@@ -77,6 +77,9 @@ def actualizar_fecha_cierre(fecha, usuario, bodega, fecha_cierre):
 if 'logueado' not in st.session_state:
     st.session_state.logueado = False
 
+if 'confirmar_salida' not in st.session_state:
+    st.session_state.confirmar_salida = False
+
 if not st.session_state.logueado:
     st.title("🔐 Login de usuario")
     usuario = st.text_input("Usuario")
@@ -88,7 +91,7 @@ if not st.session_state.logueado:
         else:
             st.error("Credenciales incorrectas")
 
-# 🕒 Panel para usuarios normales
+# 🕒 Gestión de jornada (usuarios normales)
 if st.session_state.logueado and st.session_state.usuario != "Administrador":
     st.title("🕒 Gestión de Jornada")
 
@@ -140,8 +143,7 @@ if st.session_state.logueado and st.session_state.usuario != "Administrador":
 
     st.markdown("---")
     if st.button("🚪 Salir"):
-        st.session_state.clear()
-        st.stop()
+        st.session_state.confirmar_salida = True
 
 # 🛠️ Panel exclusivo para Administrador
 if st.session_state.logueado and st.session_state.usuario == "Administrador":
@@ -193,12 +195,15 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador":
 
     st.markdown("---")
     if st.button("🚪 Salir"):
+        st.session_state.confirmar_salida = True
+
+# 💬 Despedida y confirmación de cierre
+if st.session_state.confirmar_salida:
+    st.markdown("## ☕ ¿Estás seguro que deseas cerrar sesión?")
+    if st.button("Sí, cerrar sesión"):
+        st.success("¡Hasta pronto! La sesión se cerró correctamente.")
         st.session_state.clear()
-        st.stop()
-# Footer
-st.markdown("""
-<hr style="margin-top: 50px; border: none; border-top: 1px solid #ccc;" />
-<div style="text-align: center; color: gray; font-size: 0.9em; margin-top: 20px;">
-    NN HOLDING SOLUTIONS &copy; 2025, Todos los derechos reservados
-</div>
-""", unsafe_allow_html=True)
+        st.experimental_rerun()
+    elif st.button("No, volver"):
+        st.session_state.confirmar_salida = False
+        st.experimental_rerun()
