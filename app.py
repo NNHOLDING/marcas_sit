@@ -6,10 +6,17 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 # 🔗 Conexión con Google Sheets
 def conectar_hoja():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["gcp_service_account"], scope)
+    scope = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(
+        st.secrets["gcp_service_account"], scope
+    )
     client = gspread.authorize(creds)
-    sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1-dBx4VTy6vRq10Jneq37QI2dn_KDbBxqKtfDso0W-Wk/edit").worksheet("Jornadas")
+    sheet = client.open_by_url(
+        "https://docs.google.com/spreadsheets/d/1-dBx4VTy6vRq10Jneq37QI2dn_KDbBxqKtfDso0W-Wk/edit"
+    ).worksheet("Jornadas")
     return sheet
 
 # 📥 Cargar datos existentes
@@ -39,7 +46,7 @@ if not st.session_state.logueado:
         else:
             st.error("Credenciales incorrectas")
 
-# 🕘 Página principal de gestión
+# 🕘 Página de gestión regular
 if st.session_state.logueado and st.session_state.usuario != "Administradr":
     st.title("🕒 Gestión de Jornada")
 
@@ -54,6 +61,12 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
     bodega = st.selectbox("Selecciona la bodega", bodegas)
 
     datos = cargar_datos()
+
+    if 'Usuario' not in datos.columns or 'Fecha' not in datos.columns:
+        st.error("⚠️ La hoja de cálculo no tiene las columnas 'Usuario' y 'Fecha'.")
+        st.write("Columnas encontradas:", datos.columns.tolist())
+        st.stop()
+
     registro_existente = datos[
         (datos['Usuario'] == st.session_state.usuario) &
         (datos['Fecha'] == fecha_actual)
@@ -78,11 +91,16 @@ if st.session_state.logueado and st.session_state.usuario != "Administradr":
             hora_actual = datetime.now().strftime("%H:%M:%S")
             if registro_existente.empty:
                 st.warning("Primero debes registrar el inicio de jornada.")
-            elif registro_existente.iloc[0]['Hora Cierre'] != "":
+            elif registro_existente.iloc[0].get("Hora Cierre", "") != "":
                 st.warning("Ya cerraste la jornada para hoy.")
             else:
-                agregar_fila_google(fecha_actual, st.session_state.usuario, bodega,
-                                    registro_existente.iloc[0]['Hora Inicio'], hora_actual)
+                agregar_fila_google(
+                    fecha_actual,
+                    st.session_state.usuario,
+                    bodega,
+                    registro_existente.iloc[0].get("Hora Inicio", ""),
+                    hora_actual
+                )
                 st.success(f"Jornada cerrada correctamente a las {hora_actual}")
                 st.info(f"Cierre registrado para {st.session_state.usuario} a las {hora_actual}")
 
@@ -102,6 +120,11 @@ if st.session_state.logueado and st.session_state.usuario == "Administradr":
 
     datos = cargar_datos()
 
+    if 'Bodega' not in datos.columns or 'Fecha' not in datos.columns:
+        st.error("⚠️ La hoja de cálculo no tiene las columnas necesarias para filtrar.")
+        st.write("Columnas encontradas:", datos.columns.tolist())
+        st.stop()
+
     bodega_admin = st.selectbox("Filtrar por bodega", ["Todas"] + bodegas)
     col1, col2 = st.columns(2)
     with col1:
@@ -110,6 +133,7 @@ if st.session_state.logueado and st.session_state.usuario == "Administradr":
         fecha_fin = st.date_input("Fecha fin", value=datetime.now().date())
 
     datos_filtrados = datos.copy()
+
     if bodega_admin != "Todas":
         datos_filtrados = datos_filtrados[datos_filtrados["Bodega"] == bodega_admin]
 
