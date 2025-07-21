@@ -206,61 +206,61 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
 
     st.markdown("---")
 
-    # 🔄 Aplicar cálculos masivos
     st.markdown("### 🔄 Aplicar cálculos de jornada y horas extras")
 
+    # 🧮 Cálculo de jornada y horas extras
     def aplicar_calculos_masivos():
-    # 📄 Conecta a la hoja de jornadas
-    sheet = conectar_hoja()
-    registros = sheet.get_all_values()
-    encabezados = [col.lower().strip() for col in registros[0]]
-
-    # ✅ Reutiliza el mismo libro para abrir 'BD'
-    try:
-        libro = sheet.spreadsheet
-        bd_sheet = libro.worksheet("BD")
-        bd_valores = bd_sheet.get_all_records()
-        jornada_dict = {
-            fila["Hora"].strip(): float(fila["Jornada"]) for fila in bd_valores
-            if "Hora" in fila and "Jornada" in fila
-        }
-    except Exception:
-        st.error("❌ No se pudo acceder a la hoja 'BD'. Verifica que existe en el mismo libro y que contiene las columnas 'Hora' y 'Jornada'.")
-        return
-
-    registros_actualizados = 0
-
-    for idx, fila in enumerate(registros[1:], start=2):
-        fila_dict = dict(zip(encabezados, fila))
-        inicio = fila_dict.get("redondeo inicio", "").strip()
-        fin = fila_dict.get("redondeo fin", "").strip()
-
-        if not inicio or not fin:
-            continue
+        sheet = conectar_hoja()
+        registros = sheet.get_all_values()
+        encabezados = [col.lower().strip() for col in registros[0]]
 
         try:
-            t_inicio = datetime.strptime(inicio, "%H:%M:%S")
-            t_fin = datetime.strptime(fin, "%H:%M:%S")
-            if t_fin < t_inicio:
-                t_fin += pd.Timedelta(days=1)
-
-            duracion = (t_fin - t_inicio).total_seconds() / 3600
-            jornada_esperada = jornada_dict.get(inicio, 0)
-            extras = duracion - jornada_esperada
-
-            jornada_str = f"{int(duracion // 1):02}:{int((duracion % 1) * 60):02}"
-            extras_str = f"{int(extras * 1000)}" if extras > 0 else "0"
-
-            sheet.update_cell(idx, encabezados.index("jornada") + 1, jornada_str)
-            sheet.update_cell(idx, encabezados.index("total horas extras") + 1, extras_str)
-
-            registros_actualizados += 1
-
+            libro = sheet.spreadsheet
+            bd_sheet = libro.worksheet("BD")
+            bd_valores = bd_sheet.get_all_records()
+            jornada_dict = {
+                fila["Hora"].strip(): float(fila["Jornada"]) for fila in bd_valores
+                if "Hora" in fila and "Jornada" in fila
+            }
         except Exception:
-            continue
+            st.error("❌ No se pudo acceder a la hoja 'BD'. Verifica que existe en el mismo libro y que contiene las columnas 'Hora' y 'Jornada'.")
+            return
 
-    st.success(f"✅ Se aplicaron cálculos correctamente a {registros_actualizados} registros con redondeos disponibles.")
-   
+        registros_actualizados = 0
+
+        for idx, fila in enumerate(registros[1:], start=2):
+            fila_dict = dict(zip(encabezados, fila))
+            inicio = fila_dict.get("redondeo inicio", "").strip()
+            fin = fila_dict.get("redondeo fin", "").strip()
+
+            if not inicio or not fin:
+                continue
+
+            try:
+                t_inicio = datetime.strptime(inicio, "%H:%M:%S")
+                t_fin = datetime.strptime(fin, "%H:%M:%S")
+                if t_fin < t_inicio:
+                    t_fin += pd.Timedelta(days=1)
+
+                duracion = (t_fin - t_inicio).total_seconds() / 3600
+                jornada_esperada = jornada_dict.get(inicio, 0)
+                extras = duracion - jornada_esperada
+
+                jornada_str = f"{int(duracion // 1):02}:{int((duracion % 1) * 60):02}"
+                extras_str = f"{int(extras * 1000)}" if extras > 0 else "0"
+
+                sheet.update_cell(idx, encabezados.index("jornada") + 1, jornada_str)
+                sheet.update_cell(idx, encabezados.index("total horas extras") + 1, extras_str)
+
+                registros_actualizados += 1
+
+            except Exception:
+                continue
+
+        st.success(f"✅ Se aplicaron cálculos correctamente a {registros_actualizados} registros con redondeos disponibles.")
+
+    if st.button("⚙️ Calcular jornada y horas extras"):
+        aplicar_calculos_masivos()   
     # 📊 Historial de Horas Extras
     st.markdown("## 📊 Historial de Horas Extras")
     datos_historial = cargar_datos()
