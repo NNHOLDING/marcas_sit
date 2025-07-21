@@ -204,9 +204,9 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
         st.download_button("📥 Descargar CSV", csv, "jornadas_filtradas.csv", "text/csv")
         st.success(f"Se encontraron {len(datos_filtrados)} registros.")
 
-        # 🏅 Ranking de horas extras por usuario (filtrados)
+        # 🏅 Ranking de horas extras por usuario
         st.markdown("---")
-        st.markdown("### 📊 Ranking de horas extras por usuario")  # ← #Ranking de horas extras
+        st.markdown("### 📊 Ranking de horas extras por usuario")
 
         try:
             df_ranking = datos_filtrados.copy()
@@ -235,12 +235,10 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
                 )
                 st.dataframe(resumen_ranking[["usuario", "HH:MM"]].rename(columns={"HH:MM": "Total horas extras"}))
                 st.bar_chart(resumen_ranking.set_index("usuario")["extras_minutos"])
-
         except Exception as e:
             st.error(f"❌ Error al generar el ranking: {e}")
 
     st.markdown("---")
-
     st.markdown("### 🔄 Aplicar cálculos de jornada y horas extras")
 
     def aplicar_calculos_masivos():
@@ -258,11 +256,10 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
                 if "Hora" in fila and "Jornada" in fila
             }
         except Exception:
-            st.error("❌ No se pudo acceder a la hoja 'BD'. Verifica que existe en el mismo libro y contiene las columnas 'Hora' y 'Jornada'.")
+            st.error("❌ No se pudo acceder a la hoja 'BD'. Verifica que contiene 'Hora' y 'Jornada'.")
             return
 
         registros_actualizados = 0
-
         for idx, fila in enumerate(registros[1:], start=2):
             fila_dict = dict(zip(encabezados, fila))
             inicio = fila_dict.get("redondeo inicio", "").strip()
@@ -288,7 +285,6 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
                 sheet.update_cell(idx, encabezados.index("total horas extras") + 1, extras_str)
 
                 registros_actualizados += 1
-
             except Exception:
                 continue
 
@@ -296,13 +292,16 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
 
     if st.button("⚙️ Calcular jornada y horas extras"):
         aplicar_calculos_masivos()
-st.markdown("## 📊 Historial de Horas Extras")
+
+    # 📊 Historial de Horas Extras
+    st.markdown("---")
+    st.markdown("## 📊 Historial de Horas Extras")
 
     datos_historial = cargar_datos()
-    columna_horas_extras = "Total horas extras"
+    columna_horas_extras = "total horas extras"
 
-    if columna_horas_extras not in datos_historial.columns or "usuario" not in datos_historial.columns or "Bodega" not in datos_historial.columns:
-        st.warning("⚠️ La hoja debe contener las columnas: 'Total horas extras', 'usuario' y 'Bodega'.")
+    if columna_horas_extras not in datos_historial.columns or "usuario" not in datos_historial.columns or "bodega" not in datos_historial.columns:
+        st.warning("⚠️ La hoja debe contener las columnas: 'total horas extras', 'usuario' y 'bodega'.")
     else:
         def convertir_horas(horas_str):
             try:
@@ -312,9 +311,9 @@ st.markdown("## 📊 Historial de Horas Extras")
                 return 0
 
         datos_historial["extras_minutos"] = datos_historial[columna_horas_extras].apply(convertir_horas)
-        datos_historial = datos_historial.dropna(subset=["usuario", "Bodega"])
+        datos_historial = datos_historial.dropna(subset=["usuario", "bodega"])
 
-        bodegas_disp = sorted(datos_historial["Bodega"].dropna().unique().tolist())
+        bodegas_disp = sorted(datos_historial["bodega"].dropna().unique().tolist())
         usuarios_disp = sorted(datos_historial["usuario"].dropna().unique().tolist())
 
         bodega_hist = st.selectbox("Filtrar por bodega (Historial)", ["Todas"] + bodegas_disp)
@@ -322,7 +321,7 @@ st.markdown("## 📊 Historial de Horas Extras")
 
         df_filtrado = datos_historial.copy()
         if bodega_hist != "Todas":
-            df_filtrado = df_filtrado[df_filtrado["Bodega"] == bodega_hist]
+            df_filtrado = df_filtrado[df_filtrado["bodega"] == bodega_hist]
         if usuario_hist != "Todos":
             df_filtrado = df_filtrado[df_filtrado["usuario"] == usuario_hist]
 
@@ -342,6 +341,19 @@ st.markdown("## 📊 Historial de Horas Extras")
             st.dataframe(resumen[["usuario", "HH:MM"]].rename(columns={"HH:MM": "Total horas extras"}))
             st.bar_chart(resumen.set_index("usuario")["extras_minutos"])
 
+    st.markdown("---")
+    st.markdown("### 🚪 Cerrar sesión")
+    if st.button("Salir"):
+        st.session_state.confirmar_salida = True
+
+# 🌤️ Confirmación de salida y mensaje de despedida
+if st.session_state.confirmar_salida:
+    st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("✅ Sí, cerrar sesión"):
+            st.success("¡Hasta pronto! 👋 La sesión se ha cerrado correctamente.")
+            st
     st.markdown("---")
     st.markdown("### 🚪 Cerrar sesión")
     if st.button("Salir"):
