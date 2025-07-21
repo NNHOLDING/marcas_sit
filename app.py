@@ -105,7 +105,7 @@ if not st.session_state.logueado:
 if st.session_state.logueado and not st.session_state.confirmar_salida:
     st.markdown(
         "<div style='text-align: center;'>"
-        "<img src='https://raw.githubusercontent.com/NNHOLDING/marcas_sit/main/logotipoNN.PNG' width='250'>"
+        "<img src='https://raw.githubusercontent.com/NNHOLDING/marcas_sit/main/28NN.PNG.jpg' width='250'>"
         "</div>",
         unsafe_allow_html=True
     )
