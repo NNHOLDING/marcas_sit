@@ -160,6 +160,7 @@ if st.session_state.logueado and st.session_state.usuario != "Administrador" and
     if st.button("🚪 Salir"):
         st.session_state.confirmar_salida = True
         # 📋 Panel administrativo
+# 📋 Panel administrativo
 if st.session_state.logueado and st.session_state.usuario == "Administrador" and not st.session_state.confirmar_salida:
     st.title("📋 Panel Administrativo")
     st.info("Bienvenido, Administrador. Puedes filtrar, visualizar y descargar los registros.")
@@ -188,13 +189,20 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
     ]
 
     st.markdown("### 📑 Resultados filtrados")
-    if not datos_filtrados.empty:
+
+    # 🔍 Validación de columnas duplicadas
+    columnas = list(datos_filtrados.columns)
+    duplicadas = [col for col in columnas if columnas.count(col) > 1]
+
+    if duplicadas:
+        st.error(f"🚫 Columnas duplicadas detectadas: {duplicadas}. Verifica los encabezados en Google Sheets.")
+    elif datos_filtrados.empty:
+        st.info("No hay registros para los filtros seleccionados.")
+    else:
         st.dataframe(datos_filtrados)
         csv = datos_filtrados.to_csv(index=False).encode("utf-8")
         st.download_button("📥 Descargar CSV", csv, "jornadas_filtradas.csv", "text/csv")
         st.success(f"Se encontraron {len(datos_filtrados)} registros.")
-    else:
-        st.info("No hay registros para los filtros seleccionados.")
 
     st.markdown("---")
 
@@ -240,16 +248,3 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
     st.markdown("---")
     if st.button("🚪 Salir"):
         st.session_state.confirmar_salida = True
-
-# 🌤️ Confirmación de salida y mensaje de despedida
-if st.session_state.confirmar_salida:
-    st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✅ Sí, cerrar sesión"):
-            st.success("¡Hasta pronto! 👋 La sesión se ha cerrado correctamente.")
-            st.session_state.clear()
-            st.stop()
-    with col2:
-        if st.button("↩️ No, regresar"):
-            st.session_state.confirmar_salida = False
