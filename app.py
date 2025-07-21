@@ -298,46 +298,57 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
         aplicar_calculos_masivos()
 
     st.markdown("---")
-     # 📊 Historial de Horas Extras
-    st.markdown("## 📊 Historial de Horas Extras")
-    datos_historial = cargar_datos()
-    columna_horas_extras = "total horas extras"
+    # 📊 Historial de Horas Extras
+st.markdown("## 📊 Historial de Horas Extras")
 
-    if columna_horas_extras not in datos_historial.columns:
-        st.warning("⚠️ La hoja no contiene una columna llamada 'Total horas extras'.")
+datos_historial = cargar_datos()
+columna_horas_extras = "Total horas extras"
+
+# Validar existencia de columnas
+if columna_horas_extras not in datos_historial.columns or "usuario" not in datos_historial.columns or "Bodega" not in datos_historial.columns:
+    st.warning("⚠️ La hoja debe contener las columnas: 'Total horas extras', 'usuario' y 'Bodega'.")
+else:
+    # 🧮 Convertir HH:MM a minutos
+    def convertir_horas(horas_str):
+        try:
+            h, m = map(int, horas_str.strip().split(":"))
+            return h * 60 + m
+        except:
+            return 0
+
+    datos_historial["extras_minutos"] = datos_historial[columna_horas_extras].apply(convertir_horas)
+    datos_historial = datos_historial.dropna(subset=["usuario", "Bodega"])
+
+    # 🔍 Preparar opciones para filtro
+    bodegas_disp = sorted(datos_historial["Bodega"].dropna().unique().tolist())
+    usuarios_disp = sorted(datos_historial["usuario"].dropna().unique().tolist())
+
+    bodega_hist = st.selectbox("Filtrar por bodega (Historial)", ["Todas"] + bodegas_disp)
+    usuario_hist = st.selectbox("Filtrar por usuario (Historial)", ["Todos"] + usuarios_disp)
+
+    df_filtrado = datos_historial.copy()
+    if bodega_hist != "Todas":
+        df_filtrado = df_filtrado[df_filtrado["Bodega"] == bodega_hist]
+    if usuario_hist != "Todos":
+        df_filtrado = df_filtrado[df_filtrado["usuario"] == usuario_hist]
+
+    resumen = (
+        df_filtrado.groupby("usuario")["extras_minutos"]
+        .sum()
+        .reset_index()
+        .dropna(subset=["extras_minutos"])
+    )
+    resumen = resumen[resumen["extras_minutos"] > 0]
+
+    if resumen.empty:
+        st.info("ℹ️ No hay horas extras registradas según los filtros seleccionados.")
     else:
-        datos_historial[columna_horas_extras] = pd.to_numeric(
-            datos_historial[columna_horas_extras], errors="coerce"
-        )
-        datos_historial = datos_historial.dropna(subset=[columna_horas_extras, "usuario", "bodega"])
+        resumen["HH:MM"] = resumen["extras_minutos"].apply(lambda x: f"{x // 60:02}:{x % 60:02}")
+        st.markdown("### 📈 Horas Extras por Usuario")
+        st.dataframe(resumen[["usuario", "HH:MM"]].rename(columns={"HH:MM": "Total horas extras"}))
+        st.bar_chart(resumen.set_index("usuario")["extras_minutos"])
 
-        bodegas_disp = sorted(datos_historial["bodega"].unique().tolist())
-        usuarios_disp = sorted(datos_historial["usuario"].unique().tolist())
-
-        bodega_hist = st.selectbox("Filtrar por bodega (Historial)", ["Todas"] + bodegas_disp)
-        usuario_hist = st.selectbox("Filtrar por usuario (Historial)", ["Todos"] + usuarios_disp)
-
-        df_filtrado = datos_historial.copy()
-        if bodega_hist != "Todas":
-            df_filtrado = df_filtrado[df_filtrado["bodega"] == bodega_hist]
-        if usuario_hist != "Todos":
-            df_filtrado = df_filtrado[df_filtrado["usuario"] == usuario_hist]
-
-        resumen = (
-            df_filtrado.groupby("usuario")[columna_horas_extras]
-            .sum()
-            .reset_index()
-            .dropna(subset=[columna_horas_extras])
-        )
-        resumen = resumen[resumen[columna_horas_extras] > 0]
-
-        if resumen.empty:
-            st.info("ℹ️ No hay horas extras registradas según los filtros seleccionados.")
-        else:
-            st.markdown("### 📈 Horas Extras por Usuario")
-            st.bar_chart(resumen.set_index("usuario"))
-
-    st.markdown("---")
+st.markdown("---")
 
     # 🚪 Botón para salir del panel
     st.markdown("### 🚪 Cerrar sesión")
