@@ -91,7 +91,7 @@ if 'confirmar_salida' not in st.session_state:
 
 # 🔐 Login
 if not st.session_state.logueado:
-    st.title("🔐 Smart Intelligence Tools")
+    st.title("🔐 Smart Intelligence Tools ©")
     usuario = st.text_input("Usuario")
     password = st.text_input("Contraseña", type="password")
     if st.button("Ingresar"):
