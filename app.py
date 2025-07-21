@@ -341,24 +341,28 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
             st.dataframe(resumen[["usuario", "HH:MM"]].rename(columns={"HH:MM": "Total horas extras"}))
             st.bar_chart(resumen.set_index("usuario")["extras_minutos"])
 
-   # 🚪 Botón para cerrar sesión
+  # 🚪 Botón para cerrar sesión
 if st.session_state.get("logueado") and not st.session_state.get("confirmar_salida"):
     st.markdown("---")
     st.markdown("### 🚪 Cerrar sesión")
     if st.button("Salir", key="boton_salir"):
         st.session_state.confirmar_salida = True
 
-    if st.session_state.confirmar_salida:
-        st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("✅ Sí, cerrar sesión", key="boton_confirmar_salir"):
-                st.success("¡Hasta pronto! 👋 La sesión se ha cerrado correctamente.")
-                st.rerun()  # 🔄 Reinicia la app para redirigir visualmente al login
-                #st.stop()
-        with col2:
-            if st.button("↩️ No, regresar", key="boton_cancelar_salir"):
-                st.session_state.confirmar_salida = False
+# 🌤️ Confirmación de salida y mensaje de despedida
+if st.session_state.get("logueado") and st.session_state.get("confirmar_salida"):
+    st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("✅ Sí, cerrar sesión", key="boton_confirmar_salir"):
+            st.success("¡Hasta pronto! 👋 La sesión se ha cerrado correctamente.")
+            # ✅ Reinicia la sesión sin borrar toda la app
+            st.session_state.logueado = False
+            st.session_state.usuario = ""
+            st.session_state.confirmar_salida = False
+            st.rerun()  # 🔁 Reinicia la app para mostrar pantalla login
+    with col2:
+        if st.button("↩️ No, regresar", key="boton_cancelar_salir"):
+            st.session_state.confirmar_salida = False
 
 # Footer institucional
 st.markdown("""
