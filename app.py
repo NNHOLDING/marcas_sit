@@ -356,7 +356,7 @@ if st.button("Salir"):
         st.session_state.confirmar_salida = True
 
 # 🌤️ Confirmación de salida y mensaje de despedida
-    if st.session_state.confirmar_salida:
+if st.session_state.confirmar_salida:
     st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
     col1, col2 = st.columns(2)
     with col1:
