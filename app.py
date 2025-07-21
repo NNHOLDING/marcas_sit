@@ -341,38 +341,29 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
             st.dataframe(resumen[["usuario", "HH:MM"]].rename(columns={"HH:MM": "Total horas extras"}))
             st.bar_chart(resumen.set_index("usuario")["extras_minutos"])
 
-    st.markdown("---")
-    st.markdown("### 🚪 Cerrar sesión")
-    if st.button("Salir"):
-        st.session_state.confirmar_salida = True
+   # 🚪 Botón para cerrar sesión
+st.markdown("---")
+st.markdown("### 🚪 Cerrar sesión")
+if st.button("Salir", key="boton_salir"):
+    st.session_state.confirmar_salida = True
 
 # 🌤️ Confirmación de salida y mensaje de despedida
 if st.session_state.confirmar_salida:
     st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✅ Sí, cerrar sesión"):
+        if st.button("✅ Sí, cerrar sesión", key="boton_confirmar_salir"):
             st.success("¡Hasta pronto! 👋 La sesión se ha cerrado correctamente.")
-            st
-    st.markdown("---")
-    st.markdown("### 🚪 Cerrar sesión")
-    if st.button("Salir"):
-        st.session_state.confirmar_salida = True
+            st.session_state.clear()
+            st.stop()
+    with col2:
+        if st.button("↩️ No, regresar", key="boton_cancelar_salir"):
+            st.session_state.confirmar_salida = False
 
-# 🌤️ Confirmación de salida y mensaje de despedida
-if st.session_state.confirmar_salida:
-    st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✅ Sí, cerrar sesión"):
-            st.success("¡Hasta pronto! 👋 La sesión se ha cerrado correctamente.")
-           
-
-# Footer
+# Footer institucional
 st.markdown("""
 <hr style="margin-top: 50px; border: none; border-top: 1px solid #ccc;" />
 <div style="text-align: center; color: gray; font-size: 0.9em; margin-top: 20px;">
     NN HOLDING SOLUTIONS, Ever Be Better &copy; 2025, Todos los derechos reservados
 </div>
-""", unsafe_allow_html=True)    
-    
+""", unsafe_allow_html=True)
