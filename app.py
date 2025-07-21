@@ -239,6 +239,7 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
             st.error(f"❌ Error al generar el ranking: {e}")
 
     st.markdown("---")
+
     st.markdown("### 🔄 Aplicar cálculos de jornada y horas extras")
 
     def aplicar_calculos_masivos():
@@ -260,6 +261,7 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
             return
 
         registros_actualizados = 0
+
         for idx, fila in enumerate(registros[1:], start=2):
             fila_dict = dict(zip(encabezados, fila))
             inicio = fila_dict.get("redondeo inicio", "").strip()
@@ -294,6 +296,7 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
         aplicar_calculos_masivos()
 
     st.markdown("---")
+
     st.markdown("### 🚪 Cerrar sesión")
     if st.button("Salir"):
         st.session_state.confirmar_salida = True
