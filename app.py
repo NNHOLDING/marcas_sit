@@ -161,7 +161,7 @@ if st.session_state.logueado and st.session_state.usuario != "Administrador" and
         st.session_state.confirmar_salida = True
         # 📋 Panel administrativo
 
-# 📋 Panel Administrativo
+# 📋 Panel administrativo
 if st.session_state.logueado and st.session_state.usuario == "Administrador" and not st.session_state.confirmar_salida:
     st.title("📋 Panel Administrativo")
     st.info("Bienvenido, Administrador. Puedes filtrar, visualizar y descargar los registros.")
@@ -204,13 +204,13 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
         st.download_button("📥 Descargar CSV", csv, "jornadas_filtradas.csv", "text/csv")
         st.success(f"Se encontraron {len(datos_filtrados)} registros.")
 
-        # 🏅 Ranking de horas extras por usuario
+        # 🏅 Ranking de horas extras por usuario (filtrados)
         st.markdown("---")
-        st.markdown("### 📊 Ranking de horas extras por usuario")
+        st.markdown("### 📊 Ranking de horas extras por usuario")  # ← #Ranking de horas extras
 
         try:
             df_ranking = datos_filtrados.copy()
-            df_ranking = df_ranking.dropna(subset=["usuario", "Total horas extras"])
+            df_ranking = df_ranking.dropna(subset=["usuario", "total horas extras"])
 
             def convertir_horas_extras(horas_str):
                 try:
@@ -219,7 +219,7 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
                 except:
                     return 0
 
-            df_ranking["extras_minutos"] = df_ranking["Total horas extras"].apply(convertir_horas_extras)
+            df_ranking["extras_minutos"] = df_ranking["total horas extras"].apply(convertir_horas_extras)
             resumen_ranking = (
                 df_ranking.groupby("usuario")["extras_minutos"]
                 .sum()
@@ -235,10 +235,12 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
                 )
                 st.dataframe(resumen_ranking[["usuario", "HH:MM"]].rename(columns={"HH:MM": "Total horas extras"}))
                 st.bar_chart(resumen_ranking.set_index("usuario")["extras_minutos"])
+
         except Exception as e:
             st.error(f"❌ Error al generar el ranking: {e}")
 
     st.markdown("---")
+
     st.markdown("### 🔄 Aplicar cálculos de jornada y horas extras")
 
     def aplicar_calculos_masivos():
@@ -256,10 +258,11 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
                 if "Hora" in fila and "Jornada" in fila
             }
         except Exception:
-            st.error("❌ No se pudo acceder a la hoja 'BD'. Verifica que contiene 'Hora' y 'Jornada'.")
+            st.error("❌ No se pudo acceder a la hoja 'BD'. Verifica que existe en el mismo libro y contiene las columnas 'Hora' y 'Jornada'.")
             return
 
         registros_actualizados = 0
+
         for idx, fila in enumerate(registros[1:], start=2):
             fila_dict = dict(zip(encabezados, fila))
             inicio = fila_dict.get("redondeo inicio", "").strip()
@@ -285,6 +288,7 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
                 sheet.update_cell(idx, encabezados.index("total horas extras") + 1, extras_str)
 
                 registros_actualizados += 1
+
             except Exception:
                 continue
 
@@ -292,9 +296,7 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
 
     if st.button("⚙️ Calcular jornada y horas extras"):
         aplicar_calculos_masivos()
-
-    st.markdown("---")
-    st.markdown("## 📊 Historial de Horas Extras")
+st.markdown("## 📊 Historial de Horas Extras")
 
     datos_historial = cargar_datos()
     columna_horas_extras = "Total horas extras"
