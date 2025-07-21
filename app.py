@@ -246,7 +246,7 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
                 jornada_esperada = jornada_dict[inicio]
                 extras = max(duracion - jornada_esperada, 0)
 
-                jornada_str = f"{int(duracion // 1):02}:{int((duracion % 1) * 60):02}"
+                jornada_str = str(int(jornada_esperada))
                 extras_str = f"{int(extras // 1):02}:{int((extras % 1) * 60):02}"
 
                 sheet.update_cell(idx, encabezados.index("jornada") + 1, jornada_str)
@@ -257,7 +257,7 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
             except Exception:
                 continue
 
-        st.success(f"✅ Se calcularon jornada y horas extras para {registros_actualizados} registros.")
+        st.success(f"✅ Se calcularon jornadas esperadas y horas extras para {registros_actualizados} registros.")
 
     if st.button("⚙️ Calcular jornada y horas extras"):
         aplicar_calculos_masivos()
