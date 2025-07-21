@@ -15,6 +15,16 @@ st.set_page_config(
 # 🕘 Hora local Costa Rica
 cr_timezone = pytz.timezone("America/Costa_Rica")
 
+# 🔧 Función de redondeo de hora
+def redondear_hora(hora_str):
+    hora = datetime.strptime(hora_str, "%H:%M:%S")
+    minutos = hora.minute
+    if minutos <= 5:
+        redondeada = hora.replace(minute=0, second=0)
+    else:
+        redondeada = hora.replace(minute=30, second=0)
+    return redondeada.strftime("%H:%M:%S")
+
 # 🔗 Conexión con Google Sheets
 def conectar_hoja():
     scope = [
@@ -35,21 +45,29 @@ def cargar_datos():
     sheet = conectar_hoja()
     registros = sheet.get_all_values()
     if len(registros) < 2:
-        return pd.DataFrame(columns=["fecha", "usuario", "bodega", "hora inicio", "fecha cierre", "total horas extras"])
+        return pd.DataFrame(columns=[
+            "fecha", "usuario", "bodega", "hora inicio", "fecha cierre",
+            "redondeo inicio", "redondeo fin", "jornada",
+            "total horas extras", "terminal"
+        ])
     encabezados = [col.lower().strip() for col in registros[0]]
     filas = registros[1:]
     return pd.DataFrame(filas, columns=encabezados)
 
-# 📌 Agregar fila al iniciar jornada
+# 📌 Agregar fila al iniciar jornada con redondeo
 def agregar_fila_inicio(fecha, usuario, bodega, hora_inicio):
-    conectar_hoja().append_row([fecha, usuario, bodega, hora_inicio, "", ""])
+    redondeo_inicio = redondear_hora(hora_inicio)
+    conectar_hoja().append_row([
+        fecha, usuario, bodega, hora_inicio,
+        "", redondeo_inicio, "", "", "", ""
+    ])
 
-# ✅ Actualizar campo 'fecha cierre'
+# ✅ Actualizar campo 'fecha cierre' y 'redondeo fin'
 def actualizar_fecha_cierre(fecha, usuario, bodega, fecha_cierre):
     sheet = conectar_hoja()
     registros = sheet.get_all_values()
     encabezados = [col.lower().strip() for col in registros[0]]
-    if "fecha cierre" not in encabezados:
+    if "fecha cierre" not in encabezados or "redondeo fin" not in encabezados:
         return False
     for idx, fila in enumerate(registros[1:], start=2):
         fila_dict = dict(zip(encabezados, fila))
@@ -57,8 +75,11 @@ def actualizar_fecha_cierre(fecha, usuario, bodega, fecha_cierre):
             fila_dict.get("usuario") == usuario and
             fila_dict.get("bodega") == bodega and
             not fila_dict.get("fecha cierre")):
-            col_idx = encabezados.index("fecha cierre") + 1
-            sheet.update_cell(idx, col_idx, fecha_cierre)
+            col_fecha_idx = encabezados.index("fecha cierre") + 1
+            col_redondeo_idx = encabezados.index("redondeo fin") + 1
+            redondeo_fin = redondear_hora(fecha_cierre)
+            sheet.update_cell(idx, col_fecha_idx, fecha_cierre)
+            sheet.update_cell(idx, col_redondeo_idx, redondeo_fin)
             return True
     return False
 
@@ -89,7 +110,7 @@ if st.session_state.logueado and not st.session_state.confirmar_salida:
         unsafe_allow_html=True
     )
 
-# 🕒 Panel de gestión de jornada (usuario normal)
+# 🕒 Panel de gestión de jornada
 if st.session_state.logueado and st.session_state.usuario != "Administrador" and not st.session_state.confirmar_salida:
     st.title("🕒 Gestión de Jornada")
 
