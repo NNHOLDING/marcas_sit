@@ -204,6 +204,41 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
         st.download_button("📥 Descargar CSV", csv, "jornadas_filtradas.csv", "text/csv")
         st.success(f"Se encontraron {len(datos_filtrados)} registros.")
 
+        # 🏅 Ranking de horas extras por usuario (filtrados)
+        st.markdown("---")
+        st.markdown("### 📊 Ranking de horas extras por usuario")  # ← #Ranking de horas extras
+
+        try:
+            df_ranking = datos_filtrados.copy()
+            df_ranking = df_ranking.dropna(subset=["usuario", "total horas extras"])
+
+            def convertir_horas_extras(horas_str):
+                try:
+                    h, m = map(int, horas_str.strip().split(":"))
+                    return h * 60 + m
+                except:
+                    return 0
+
+            df_ranking["extras_minutos"] = df_ranking["total horas extras"].apply(convertir_horas_extras)
+            resumen_ranking = (
+                df_ranking.groupby("usuario")["extras_minutos"]
+                .sum()
+                .reset_index()
+                .sort_values(by="extras_minutos", ascending=False)
+            )
+
+            if resumen_ranking.empty:
+                st.info("ℹ️ No hay horas extras acumuladas en los registros filtrados.")
+            else:
+                resumen_ranking["HH:MM"] = resumen_ranking["extras_minutos"].apply(
+                    lambda x: f"{x // 60:02}:{x % 60:02}"
+                )
+                st.dataframe(resumen_ranking[["usuario", "HH:MM"]].rename(columns={"HH:MM": "Total horas extras"}))
+                st.bar_chart(resumen_ranking.set_index("usuario")["extras_minutos"])
+
+        except Exception as e:
+            st.error(f"❌ Error al generar el ranking: {e}")
+
     st.markdown("---")
 
     st.markdown("### 🔄 Aplicar cálculos de jornada y horas extras")
@@ -261,45 +296,5 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
 
     if st.button("⚙️ Calcular jornada y horas extras"):
         aplicar_calculos_masivos()
-    # 📊 Historial de Horas Extras
-    st.markdown("## 📊 Historial de Horas Extras")
-    datos_historial = cargar_datos()
-    columna_horas_extras = "total horas extras"
-
-    if columna_horas_extras not in datos_historial.columns:
-        st.warning("⚠️ La hoja no contiene una columna llamada 'Total horas extras'.")
-    else:
-        datos_historial[columna_horas_extras] = pd.to_numeric(
-            datos_historial[columna_horas_extras], errors="coerce"
-        )
-        datos_historial = datos_historial.dropna(subset=[columna_horas_extras, "usuario", "bodega"])
-
-        bodegas_disp = sorted(datos_historial["bodega"].unique().tolist())
-        usuarios_disp = sorted(datos_historial["usuario"].unique().tolist())
-
-        bodega_hist = st.selectbox("Filtrar por bodega (Historial)", ["Todas"] + bodegas_disp)
-        usuario_hist = st.selectbox("Filtrar por usuario (Historial)", ["Todos"] + usuarios_disp)
-
-        df_filtrado = datos_historial.copy()
-        if bodega_hist != "Todas":
-            df_filtrado = df_filtrado[df_filtrado["bodega"] == bodega_hist]
-        if usuario_hist != "Todos":
-            df_filtrado = df_filtrado[df_filtrado["usuario"] == usuario_hist]
-
-        resumen = (
-            df_filtrado.groupby("usuario")[columna_horas_extras]
-            .sum()
-            .reset_index()
-            .dropna(subset=[columna_horas_extras])
-        )
-        resumen = resumen[resumen[columna_horas_extras] > 0]
-
-        if resumen.empty:
-            st.info("ℹ️ No hay horas extras registradas según los filtros seleccionados.")
-        else:
-            st.markdown("### 📈 Horas Extras por Usuario")
-            st.bar_chart(resumen.set_index("usuario"))
-
-    st.markdown("---")
     if st.button("🚪 Salir"):
         st.session_state.confirmar_salida = True
