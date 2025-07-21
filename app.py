@@ -47,7 +47,7 @@ def cargar_datos():
     if len(registros) < 2:
         return pd.DataFrame(columns=[
             "fecha", "usuario", "bodega", "hora inicio", "fecha cierre",
-            "redondeo inicio", "redondeo fin", "jornada",
+            "Redondeo Inicio", "Redondeo Fin", "jornada",
             "total horas extras", "terminal"
         ])
     encabezados = [col.lower().strip() for col in registros[0]]
