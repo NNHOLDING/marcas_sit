@@ -245,6 +245,20 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
         sheet = conectar_hoja()
         registros = sheet.get_all_values()
         encabezados = [col.lower().strip() for col in registros[0]]
+# ⏱️ Normalizar formato de campos de hora
+    def normalizar_redondeos(registros, encabezados):
+        for fila in registros[1:]:
+            for campo in ["redondeo inicio", "redondeo fin"]:
+                try:
+                    idx = encabezados.index(campo)
+                    valor = fila[idx].strip()
+                    if valor:
+                        hora_obj = datetime.strptime(valor, "%H:%M:%S")
+                        fila[idx] = hora_obj.strftime("%H:%M:%S")
+                except Exception:
+                    continue
+
+    normalizar_redondeos(registros, encabezados)
 
         try:
             libro = sheet.spreadsheet
