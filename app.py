@@ -352,7 +352,7 @@ st.markdown("---")
 
     # 🚪 Botón para salir del panel
 st.markdown("### 🚪 Cerrar sesión")
-    if st.button("Salir"):
+if st.button("Salir"):
         st.session_state.confirmar_salida = True
 
 # 🌤️ Confirmación de salida y mensaje de despedida
