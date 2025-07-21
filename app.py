@@ -296,5 +296,17 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
 
     if st.button("⚙️ Calcular jornada y horas extras"):
         aplicar_calculos_masivos()
-    if st.button("🚪 Salir"):
-        st.session_state.confirmar_salida = True
+# 🌤️ Confirmación de salida y mensaje de despedida
+if st.session_state.confirmar_salida:
+    st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("✅ Sí, cerrar sesión"):
+            st.success("¡Hasta pronto! 👋 La sesión se ha cerrado correctamente.")
+            st.session_state.clear()
+            st.stop()
+    with col2:
+        if st.button("↩️ No, regresar"):
+            st.session_state.confirmar_salida = False
+    
+    
