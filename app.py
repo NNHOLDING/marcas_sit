@@ -354,8 +354,8 @@ if st.session_state.get("logueado") and not st.session_state.get("confirmar_sali
         with col1:
             if st.button("✅ Sí, cerrar sesión", key="boton_confirmar_salir"):
                 st.success("¡Hasta pronto! 👋 La sesión se ha cerrado correctamente.")
-                st.session_state.clear()
-                st.stop()
+                st.rerun()  # 🔄 Reinicia la app para redirigir visualmente al login
+                #st.stop()
         with col2:
             if st.button("↩️ No, regresar", key="boton_cancelar_salir"):
                 st.session_state.confirmar_salida = False
