@@ -219,7 +219,7 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
             client = sheet.spreadsheet.client
             bd_sheet = client.open("Registro de marcas SIT").worksheet("BD")
             bd_valores = bd_sheet.get_all_records()
-            jornada_dict = {fila["hora"]: float(fila["jornada"]) for fila in bd_valores}
+            jornada_dict = {fila["Hora"]: float(fila["Jornada"]) for fila in bd_valores}
         except Exception:
             st.error("❌ No se pudo acceder a la hoja BD para obtener las jornadas esperadas.")
             return
@@ -248,8 +248,8 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
                 jornada_str = f"{int(duracion // 1):02}:{int((duracion % 1) * 60):02}"
                 extras_str = f"{int(extras * 1000)}" if extras > 0 else "0"
 
-                sheet.update_cell(idx, encabezados.index("jornada") + 1, jornada_str)
-                sheet.update_cell(idx, encabezados.index("total horas extras") + 1, extras_str)
+                sheet.update_cell(idx, encabezados.index("Jornada") + 1, jornada_str)
+                sheet.update_cell(idx, encabezados.index("Total horas extras") + 1, extras_str)
 
             except Exception:
                 continue
