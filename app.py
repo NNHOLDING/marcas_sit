@@ -95,7 +95,7 @@ if not st.session_state.logueado:
     usuario = st.text_input("Usuario")
     password = st.text_input("Contraseña", type="password")
     if st.button("Ingresar"):
-        if (usuario == "JB" and password == "1234") or (usuario == "Administrador" and password == "Administrador"):
+        if (usuario == "JA" and password == "1234") or (usuario == "Administrador" and password == "Administrador"):
             st.session_state.logueado = True
             st.session_state.usuario = usuario
         else:
@@ -157,8 +157,8 @@ if st.session_state.logueado and st.session_state.usuario != "Administrador" and
                     st.error("No se pudo registrar el cierre.")
 
     st.markdown("---")
-    if st.button("🚪 Salir"):
-        st.session_state.confirmar_salida = True
+    #if st.button("🚪 Salir"):
+        #st.session_state.confirmar_salida = True
         # 📋 Panel administrativo
 
 # 📋 Panel administrativo
