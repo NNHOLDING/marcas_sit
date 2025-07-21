@@ -296,6 +296,14 @@ if st.session_state.logueado and st.session_state.usuario == "Administrador" and
 
     if st.button("⚙️ Calcular jornada y horas extras"):
         aplicar_calculos_masivos()
+
+    st.markdown("---")
+    
+    # 🚪 Botón para salir del panel
+    st.markdown("### 🚪 Cerrar sesión")
+    if st.button("Salir"):
+        st.session_state.confirmar_salida = True
+
 # 🌤️ Confirmación de salida y mensaje de despedida
 if st.session_state.confirmar_salida:
     st.markdown("## ¿Estás seguro que deseas cerrar sesión?")
